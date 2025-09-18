@@ -74,6 +74,11 @@ namespace HMI_ScrewingMonitor.ViewModels
         public int OKCount => Devices.Count(d => d.IsOK);
         public int NGCount => Devices.Count(d => !d.IsOK && d.IsConnected && d.Status != "Sẵn sàng");
 
+        // Progress properties for connection status
+        public string ConnectionProgress => ConnectedDevicesCount < TotalDevices && TotalDevices > 0
+            ? $"Kết nối: {ConnectedDevicesCount}/{TotalDevices}"
+            : $"Đã kết nối: {ConnectedDevicesCount} thiết bị";
+
         // Button visibility properties
         public bool CanConnect => ConnectedDevicesCount < TotalDevices; // Cho phép kết nối khi chưa kết nối hết tất cả thiết bị
         public bool CanDisconnect => ConnectedDevicesCount > 0; // Cho phép ngắt kết nối khi có ít nhất 1 thiết bị đang kết nối
@@ -200,23 +205,44 @@ namespace HMI_ScrewingMonitor.ViewModels
                 switch (config.ConnectionType)
                 {
                     case "TCP_Individual":
-                        // Kết nối từng thiết bị riêng lẻ sử dụng hệ thống mới
-                        int connectedDevices = 0;
-                        foreach (var device in Devices.Where(d => d.Enabled))
+                        // Kết nối tất cả thiết bị song song
+                        var enabledDevices = Devices.Where(d => d.Enabled).ToList();
+                        var totalDevices = enabledDevices.Count;
+
+                        // Update UI with progress
+                        ConnectionStatus = $"Đang kết nối 0/{totalDevices} thiết bị...";
+
+                        // Create parallel connection tasks
+                        var connectionTasks = enabledDevices.Select(async device =>
                         {
+                            device.Status = "Đang kết nối...";
+                            OnPropertyChanged(nameof(ConnectionStatus));
+
                             var deviceConnected = await _modbusService.ConnectToDevice(device);
                             if (deviceConnected)
                             {
-                                connectedDevices++;
                                 device.IsConnected = true;
                                 device.Status = "Sẵn sàng";
+
+                                // Update progress
+                                var connectedCount = Devices.Count(d => d.IsConnected);
+                                ConnectionStatus = $"Đang kết nối {connectedCount}/{totalDevices} thiết bị...";
+                                OnPropertyChanged(nameof(ConnectionStatus));
+                                OnPropertyChanged(nameof(ConnectedDevicesCount));
+
+                                return true;
                             }
                             else
                             {
                                 device.IsConnected = false;
                                 device.Status = "Kết nối thất bại";
+                                return false;
                             }
-                        }
+                        }).ToList();
+
+                        // Wait for all connections to complete
+                        var results = await Task.WhenAll(connectionTasks);
+                        var connectedDevices = results.Count(r => r);
                         connected = connectedDevices > 0;
                         break;
 
@@ -245,23 +271,38 @@ namespace HMI_ScrewingMonitor.ViewModels
                         break;
 
                     default:
-                        // Fallback to TCP_Individual với hệ thống mới
-                        int fallbackConnectedDevices = 0;
-                        foreach (var device in Devices.Where(d => d.Enabled))
+                        // Fallback to TCP_Individual với kết nối song song
+                        var fallbackEnabledDevices = Devices.Where(d => d.Enabled).ToList();
+                        var fallbackTotalDevices = fallbackEnabledDevices.Count;
+
+                        ConnectionStatus = $"Đang kết nối 0/{fallbackTotalDevices} thiết bị (fallback)...";
+
+                        var fallbackConnectionTasks = fallbackEnabledDevices.Select(async device =>
                         {
+                            device.Status = "Đang kết nối...";
                             var deviceConnected = await _modbusService.ConnectToDevice(device);
                             if (deviceConnected)
                             {
-                                fallbackConnectedDevices++;
                                 device.IsConnected = true;
                                 device.Status = "Sẵn sàng";
+
+                                var connectedCount = Devices.Count(d => d.IsConnected);
+                                ConnectionStatus = $"Đang kết nối {connectedCount}/{fallbackTotalDevices} thiết bị (fallback)...";
+                                OnPropertyChanged(nameof(ConnectionStatus));
+                                OnPropertyChanged(nameof(ConnectedDevicesCount));
+
+                                return true;
                             }
                             else
                             {
                                 device.IsConnected = false;
                                 device.Status = "Kết nối thất bại";
+                                return false;
                             }
-                        }
+                        }).ToList();
+
+                        var fallbackResults = await Task.WhenAll(fallbackConnectionTasks);
+                        var fallbackConnectedDevices = fallbackResults.Count(r => r);
                         connected = fallbackConnectedDevices > 0;
                         break;
                 }
@@ -537,6 +578,8 @@ namespace HMI_ScrewingMonitor.ViewModels
             OnPropertyChanged(nameof(CanDisconnect));
             OnPropertyChanged(nameof(CanStartMonitoring));
             OnPropertyChanged(nameof(CanStopMonitoring));
+            OnPropertyChanged(nameof(ConnectionProgress));
+            OnPropertyChanged(nameof(ConnectedDevicesCount));
         }
 
         public void Dispose()

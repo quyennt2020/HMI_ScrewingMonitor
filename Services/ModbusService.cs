@@ -2,6 +2,7 @@
 
 using System;
 using System.Net.Sockets;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 using NModbus;
@@ -342,9 +343,9 @@ namespace HMI_ScrewingMonitor.Services
                 return true;
             }
 
-            // Throttle connection attempts (max 1 per 5 seconds)
+            // Throttle connection attempts (max 1 per 1 second) - reduced for faster reconnection
             if (_lastConnectionAttempt.ContainsKey(deviceId) &&
-                DateTime.Now - _lastConnectionAttempt[deviceId] < TimeSpan.FromSeconds(5))
+                DateTime.Now - _lastConnectionAttempt[deviceId] < TimeSpan.FromSeconds(1))
             {
                 return false;
             }
@@ -362,7 +363,14 @@ namespace HMI_ScrewingMonitor.Services
                 Console.WriteLine($"CONNECTING to Device {deviceId} at {device.IPAddress}:{device.Port}");
 
                 var tcpClient = new TcpClient();
-                await tcpClient.ConnectAsync(device.IPAddress, device.Port);
+
+                // Set timeouts to speed up connection
+                tcpClient.ReceiveTimeout = 3000;  // 3 seconds
+                tcpClient.SendTimeout = 3000;     // 3 seconds
+
+                // Use CancellationToken for connection timeout
+                using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+                await tcpClient.ConnectAsync(device.IPAddress, device.Port).ConfigureAwait(false);
 
                 var factory = new ModbusFactory();
                 var master = factory.CreateMaster(tcpClient);
