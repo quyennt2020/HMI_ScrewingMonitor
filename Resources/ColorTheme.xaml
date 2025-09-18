@@ -1,0 +1,62 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- Professional Color Palette -->
+
+    <!-- Primary Colors -->
+    <SolidColorBrush x:Key="SuccessColor" Color="#2ECC71"/>
+    <SolidColorBrush x:Key="WarningColor" Color="#F39C12"/>
+    <SolidColorBrush x:Key="ErrorColor" Color="#E74C3C"/>
+    <SolidColorBrush x:Key="InfoColor" Color="#3498DB"/>
+    <SolidColorBrush x:Key="NeutralColor" Color="#95A5A6"/>
+
+    <!-- Lighter variants for backgrounds -->
+    <SolidColorBrush x:Key="SuccessLightColor" Color="#D5EFDC"/>
+    <SolidColorBrush x:Key="WarningLightColor" Color="#FCF3CF"/>
+    <SolidColorBrush x:Key="ErrorLightColor" Color="#FADBD8"/>
+    <SolidColorBrush x:Key="InfoLightColor" Color="#D6EAF8"/>
+    <SolidColorBrush x:Key="NeutralLightColor" Color="#EAEDED"/>
+
+    <!-- Text Colors -->
+    <SolidColorBrush x:Key="PrimaryTextColor" Color="#2C3E50"/>
+    <SolidColorBrush x:Key="SecondaryTextColor" Color="#7F8C8D"/>
+    <SolidColorBrush x:Key="WhiteTextColor" Color="#FFFFFF"/>
+    <SolidColorBrush x:Key="DarkTextColor" Color="#34495E"/>
+
+    <!-- Background Colors -->
+    <SolidColorBrush x:Key="PrimaryBackground" Color="#34495E"/>
+    <SolidColorBrush x:Key="SecondaryBackground" Color="#2C3E50"/>
+    <SolidColorBrush x:Key="LightBackground" Color="#ECF0F1"/>
+    <SolidColorBrush x:Key="CardBackground" Color="#FFFFFF"/>
+
+    <!-- Device Status Colors -->
+    <SolidColorBrush x:Key="DeviceOnlineColor" Color="#2ECC71"/>
+    <SolidColorBrush x:Key="DeviceOfflineColor" Color="#F39C12"/>
+    <SolidColorBrush x:Key="DeviceDisabledColor" Color="#95A5A6"/>
+    <SolidColorBrush x:Key="DeviceConnectingColor" Color="#3498DB"/>
+    <SolidColorBrush x:Key="DeviceErrorColor" Color="#E74C3C"/>
+
+    <!-- Border Colors -->
+    <SolidColorBrush x:Key="OnlineBorderColor" Color="#27AE60"/>
+    <SolidColorBrush x:Key="OfflineBorderColor" Color="#E67E22"/>
+    <SolidColorBrush x:Key="DisabledBorderColor" Color="#BDC3C7"/>
+    <SolidColorBrush x:Key="ConnectingBorderColor" Color="#2980B9"/>
+    <SolidColorBrush x:Key="ErrorBorderColor" Color="#C0392B"/>
+
+    <!-- Status Result Colors -->
+    <SolidColorBrush x:Key="OKStatusColor" Color="#2ECC71"/>
+    <SolidColorBrush x:Key="NGStatusColor" Color="#E74C3C"/>
+    <SolidColorBrush x:Key="UnknownStatusColor" Color="#95A5A6"/>
+
+    <!-- Measurement Colors -->
+    <SolidColorBrush x:Key="AngleBorderColor" Color="#3498DB"/>
+    <SolidColorBrush x:Key="AngleBackgroundColor" Color="#EBF5FB"/>
+    <SolidColorBrush x:Key="TorqueBorderColor" Color="#F39C12"/>
+    <SolidColorBrush x:Key="TorqueBackgroundColor" Color="#FEF9E7"/>
+
+    <!-- Control Colors -->
+    <SolidColorBrush x:Key="ButtonPrimaryColor" Color="#3498DB"/>
+    <SolidColorBrush x:Key="ButtonHoverColor" Color="#2980B9"/>
+    <SolidColorBrush x:Key="ButtonDisabledColor" Color="#95A5A6"/>
+
+</ResourceDictionary>

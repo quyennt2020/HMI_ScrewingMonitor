@@ -1,0 +1,131 @@
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+## Build and Development Commands
+
+### Building the Project
+```bash
+# Build and run interactively
+build_and_run.bat
+
+# Quick start (automated build + run)
+start.bat
+
+# Build only
+dotnet build
+
+# Build release configuration
+dotnet build --configuration Release
+
+# Restore NuGet packages
+dotnet restore
+```
+
+### Publishing
+```bash
+# Create standalone executable
+publish.bat
+
+# Manual publish command
+dotnet publish -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true
+```
+
+### Running
+```bash
+# Run in development
+dotnet run
+
+# Run release configuration
+dotnet run --configuration Release
+```
+
+## Architecture Overview
+
+This is a **WPF .NET 6 application** that monitors screwing devices via **Modbus communication** using the **MVVM pattern**. The application provides real-time monitoring of multiple screwing devices with visual status indicators.
+
+### Core Architecture Components
+
+- **MVVM Pattern**: Clean separation between UI (Views), business logic (ViewModels), and data (Models)
+- **Modbus Communication**: Uses NModbus library for both TCP and RTU connections
+- **Real-time Monitoring**: Timer-based polling of device data every second
+- **Configuration-driven**: Device settings stored in JSON configuration files
+
+### Key Architectural Decisions
+
+1. **Service Layer**: `ModbusService.cs` handles all Modbus communication and device data conversion
+2. **Data Binding**: Heavy use of INotifyPropertyChanged for real-time UI updates
+3. **Command Pattern**: RelayCommand implementation for UI interactions
+4. **Configuration Management**: JSON-based device configuration in `Config/devices.json`
+
+### Project Structure
+
+```
+├── Models/               # Data models (ScrewingDevice)
+├── Services/            # Business logic (ModbusService)
+├── ViewModels/          # MVVM view models (MainViewModel)
+├── Views/               # XAML UI files (MainWindow)
+├── Converters/          # Value converters for data binding
+├── Resources/           # UI themes and styles
+└── Config/              # JSON configuration files
+```
+
+## Key Components
+
+### MainViewModel.cs
+- Central view model managing device collection and monitoring state
+- Handles connection management and timer-based data polling
+- Contains hardcoded device initialization (consider moving to config)
+
+### ModbusService.cs
+- Abstracts Modbus TCP/RTU communication
+- Converts register data to float values for angle/torque measurements
+- Maps specific register addresses to device properties
+
+### ScrewingDevice.cs
+- Model representing a screwing device with properties for angle, torque, and status
+- Implements INotifyPropertyChanged for UI binding
+- Contains computed properties for status display
+
+### Device Configuration
+Device settings are stored in `Config/devices.json` with structure:
+- Device identification (ID, name, IP, port)
+- Measurement ranges (min/max angle and torque)
+- Modbus register mapping
+- UI settings (theme, language, refresh interval)
+
+## Modbus Register Mapping
+
+The application expects the following register layout per device:
+- Registers 0-1: Actual Angle (32-bit float)
+- Registers 2-3: Actual Torque (32-bit float)
+- Registers 4-5: Min Angle (32-bit float)
+- Registers 6-7: Max Angle (32-bit float)
+- Registers 8-9: Min Torque (32-bit float)
+- Registers 10-11: Max Torque (32-bit float)
+- Register 12: Status (0=NG, 1=OK)
+
+## Dependencies
+
+### NuGet Packages
+- **NModbus** (3.0.72): Modbus communication library
+- **System.IO.Ports** (7.0.0): Serial port communication for RTU
+
+### Framework
+- **.NET 6.0 Windows**: Target framework with WPF support
+
+## Development Notes
+
+### Language and Localization
+- The application uses Vietnamese language in UI and comments
+- Error messages and status text are in Vietnamese
+- Consider this when making UI changes or adding features
+
+### Data Conversion
+- The `ConvertRegistersToFloat` method in ModbusService handles 32-bit float conversion from two 16-bit registers
+- Byte order may need adjustment based on actual device implementation
+
+### Error Handling
+- Global exception handling in App.xaml.cs
+- Per-device error handling in timer polling
+- Connection status tracking per device

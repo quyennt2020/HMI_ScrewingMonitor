@@ -1,0 +1,151 @@
+{
+  "Devices": [
+    {
+      "DeviceId": 1,
+      "DeviceName": "M\u00E1y #1 C\u00F4ng \u0111o\u1EA1n A",
+      "IPAddress": "127.0.0.1",
+      "Port": 502,
+      "SlaveId": 1,
+      "MinAngle": 40,
+      "MaxAngle": 50,
+      "MinTorque": 7,
+      "MaxTorque": 10,
+      "Enabled": true
+    },
+    {
+      "DeviceId": 2,
+      "DeviceName": "M\u00E1y #2 C\u00F4ng \u0111o\u1EA1n B",
+      "IPAddress": "127.0.0.2",
+      "Port": 502,
+      "SlaveId": 2,
+      "MinAngle": 40,
+      "MaxAngle": 50,
+      "MinTorque": 8,
+      "MaxTorque": 12,
+      "Enabled": true
+    },
+    {
+      "DeviceId": 3,
+      "DeviceName": "M\u00E1y #3",
+      "IPAddress": "127.0.0.3",
+      "Port": 502,
+      "SlaveId": 3,
+      "MinAngle": 40,
+      "MaxAngle": 50,
+      "MinTorque": 7.5,
+      "MaxTorque": 11,
+      "Enabled": true
+    },
+    {
+      "DeviceId": 4,
+      "DeviceName": "M\u00E1y #4",
+      "IPAddress": "127.0.0.4",
+      "Port": 502,
+      "SlaveId": 4,
+      "MinAngle": 40,
+      "MaxAngle": 50,
+      "MinTorque": 8,
+      "MaxTorque": 12,
+      "Enabled": true
+    },
+    {
+      "DeviceId": 5,
+      "DeviceName": "M\u00E1y #5",
+      "IPAddress": "127.0.0.5",
+      "Port": 502,
+      "SlaveId": 5,
+      "MinAngle": 40,
+      "MaxAngle": 50,
+      "MinTorque": 7,
+      "MaxTorque": 10,
+      "Enabled": true
+    },
+    {
+      "DeviceId": 6,
+      "DeviceName": "M\u00E1y #6",
+      "IPAddress": "127.0.0.6",
+      "Port": 502,
+      "SlaveId": 6,
+      "MinAngle": 40,
+      "MaxAngle": 50,
+      "MinTorque": 7,
+      "MaxTorque": 10,
+      "Enabled": true
+    },
+    {
+      "DeviceId": 7,
+      "DeviceName": "M\u00E1y #7",
+      "IPAddress": "127.0.0.7",
+      "Port": 502,
+      "SlaveId": 7,
+      "MinAngle": 40,
+      "MaxAngle": 50,
+      "MinTorque": 7,
+      "MaxTorque": 10,
+      "Enabled": true
+    },
+    {
+      "DeviceId": 8,
+      "DeviceName": "M\u00E1y #8",
+      "IPAddress": "127.0.0.8",
+      "Port": 502,
+      "SlaveId": 8,
+      "MinAngle": 40,
+      "MaxAngle": 50,
+      "MinTorque": 7,
+      "MaxTorque": 10,
+      "Enabled": true
+    },
+    {
+      "DeviceId": 9,
+      "DeviceName": "M\u00E1y #9",
+      "IPAddress": "127.0.0.9",
+      "Port": 502,
+      "SlaveId": 9,
+      "MinAngle": 40,
+      "MaxAngle": 50,
+      "MinTorque": 7,
+      "MaxTorque": 10,
+      "Enabled": true
+    },
+    {
+      "DeviceId": 10,
+      "DeviceName": "M\u00E1y #10",
+      "IPAddress": "127.0.0.10",
+      "Port": 502,
+      "SlaveId": 10,
+      "MinAngle": 40,
+      "MaxAngle": 50,
+      "MinTorque": 7,
+      "MaxTorque": 10,
+      "Enabled": true
+    }
+  ],
+  "ModbusSettings": {
+    "ConnectionType": "TCP_Individual",
+    "GatewayIP": "127.0.0.1",
+    "GatewayPort": 502,
+    "SerialPort": "COM1",
+    "BaudRate": 9600,
+    "Timeout": 5000,
+    "RetryCount": 3,
+    "ScanInterval": 1000,
+    "Note": "ConnectionType options: TCP_Individual, TCP_Gateway, RTU_Serial"
+  },
+  "RegisterMapping": {
+    "ActualAngleStart": 0,
+    "ActualTorqueStart": 2,
+    "MinAngleStart": 4,
+    "MaxAngleStart": 6,
+    "MinTorqueStart": 8,
+    "MaxTorqueStart": 10,
+    "StatusRegister": 12
+  },
+  "UI": {
+    "Theme": "Light",
+    "Language": "Vietnamese",
+    "RefreshInterval": 1000,
+    "GridColumns": 5,
+    "GridRows": 2
+  }
+}

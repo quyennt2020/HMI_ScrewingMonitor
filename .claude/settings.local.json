@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(dotnet build)",
+      "Bash(dotnet run:*)",
+      "Read(//c/Users/TPump/Pictures/Screenshots/**)",
+      "Bash(start cmd /k \"dotnet run\")",
+      "Bash(start.bat)",
+      "Bash(cmd:*)",
+      "Bash(dotnet build:*)",
+      "Bash(git add:*)",
+      "Bash(del nul)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
