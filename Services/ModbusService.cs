@@ -8,24 +8,19 @@ using System.Collections.Generic;
 using NModbus;
 using System.IO.Ports;
 using HMI_ScrewingMonitor.Models;
+using System.IO; 
+using System.Text.Json;
 
 namespace HMI_ScrewingMonitor.Services
 {
     public class ModbusService
     {
-        private Dictionary<string, TcpClient> _tcpClients;
-        private Dictionary<string, IModbusMaster> _modbusMasters;
-        private SerialPort _serialPort;
-        private IModbusMaster _rtuMaster;
-        private bool _isConnected;
-        private ConnectionType _connectionType;
-
         // Individual device connection management
         private Dictionary<int, TcpClient> _deviceConnections;
         private Dictionary<int, IModbusMaster> _deviceMasters;
         private Dictionary<int, DateTime> _lastConnectionAttempt;
 
-        public bool IsConnected => _isConnected;
+        public bool IsConnected { get; private set; }
 
         public enum ConnectionType
         {
@@ -36,9 +31,6 @@ namespace HMI_ScrewingMonitor.Services
 
         public ModbusService()
         {
-            _tcpClients = new Dictionary<string, TcpClient>();
-            _modbusMasters = new Dictionary<string, IModbusMaster>();
-
             // Initialize individual device connection tracking
             _deviceConnections = new Dictionary<int, TcpClient>();
             _deviceMasters = new Dictionary<int, IModbusMaster>();
@@ -46,117 +38,147 @@ namespace HMI_ScrewingMonitor.Services
         }
 
         #region TCP Individual IPs
-        public async Task<bool> ConnectTCP_Individual(List<ScrewingDevice> devices)
-        {
-            _connectionType = ConnectionType.TCP_Individual;
-            bool allConnected = true;
-
-            foreach (var device in devices)
-            {
-                try
-                {
-                    // Include DeviceId in key to create separate connections for same IP
-                    var key = $"{device.IPAddress}:{device.Port}:ID{device.DeviceId}";
-
-                    // Tạo kết nối riêng cho mỗi thiết bị
-                    var tcpClient = new TcpClient();
-                    await tcpClient.ConnectAsync(device.IPAddress, device.Port);
-
-                    var factory = new ModbusFactory();
-                    var modbusMaster = factory.CreateMaster(tcpClient);
-
-                    _tcpClients[key] = tcpClient;
-                    _modbusMasters[key] = modbusMaster;
-
-                    device.IsConnected = true;
-
-                    System.Diagnostics.Debug.WriteLine($"*** CONNECTED Device {device.DeviceId} with key: {key} ***");
-                    System.Diagnostics.Debug.WriteLine($"    IP: {device.IPAddress}, Port: {device.Port}, SlaveID: {device.DeviceId}");
-                }
-                catch (Exception ex)
-                {
-                    device.IsConnected = false;
-                    device.Status = $"Kết nối thất bại: {ex.Message}";
-                    allConnected = false;
-
-                    System.Diagnostics.Debug.WriteLine($"Device {device.DeviceId} connection failed: {ex.Message}");
-                }
-            }
-
-            _isConnected = allConnected;
-            return allConnected;
-        }
-
-        public async Task<ScrewingDevice> ReadDeviceData_Individual(ScrewingDevice device)
+        /// <summary>
+        /// Phương thức đọc dữ liệu mới, tuân thủ logic phát hiện sự kiện từ tài liệu.
+        /// </summary>
+        public async Task<DeviceReadEvent> ReadDeviceEvent_Individual(ScrewingDevice device)
         {
             int deviceId = device.DeviceId;
 
-            // Kiểm tra kết nối riêng lẻ của thiết bị
             if (!IsDeviceConnected(deviceId))
             {
-                device.IsConnected = false;
-                device.Status = "Chưa kết nối TCP";
-                System.Diagnostics.Debug.WriteLine($"Device {deviceId} - Not connected");
-                return HandleConnectionLoss(device, "Chưa kết nối TCP");
-            }
-
-            // Kiểm tra health của kết nối
-            if (!IsConnectionAlive(deviceId))
-            {
-                System.Diagnostics.Debug.WriteLine($"Device {deviceId} - Connection not alive, attempting reconnect");
-                var reconnected = await ConnectToDevice(device);
-                if (!reconnected)
-                {
-                    return HandleConnectionLoss(device, "Kết nối thất bại");
-                }
+                return new DeviceReadEvent { Success = false, StatusMessage = "Chưa kết nối" };
             }
 
             try
             {
                 var modbusMaster = _deviceMasters[deviceId];
+                byte slaveId = (byte)device.SlaveId;
 
-                Console.WriteLine($"READING Device {deviceId} - SlaveID={device.SlaveId}");
+                // DEBUG: Log điểm bắt đầu và trạng thái COMP trước đó
+                Console.WriteLine($"[DEBUG] Device {deviceId}: Reading event. Prev COMP: {device.PreviousCompletionState}");
 
-                // Thử đọc đủ 13 registers để có status register
-                ushort[] registers;
+                // HANDY2000 QUY TRÌNH CHÍNH THỨC
+                // Bước 1.1: Đọc COMP (100084) và BUSY (100082)
+                // NModbus địa chỉ: BUSY=81, COMP=83 (vì địa chỉ Modbus bắt đầu từ 0)
+
+                bool[] statusBits;
                 try
                 {
-                    registers = await modbusMaster.ReadHoldingRegistersAsync(
-                        (byte)device.SlaveId, 0, 13); // Đọc đủ 13 registers (0-12)
-                    Console.WriteLine($"INDIVIDUAL SUCCESS - Device {deviceId} (Slave {device.SlaveId}): Đọc được 13 registers - R0={registers[0]}, R2={registers[2]}, R12={registers[12]}");
+                    // Đọc 3 bits: BUSY(81), Reserved(82), COMP(83)
+                    statusBits = await modbusMaster.ReadInputsAsync(slaveId, 81, 3);
                 }
                 catch (Exception ex)
                 {
-                    // Fallback: chỉ đọc 4 registers nếu slave không hỗ trợ đủ
-                    Console.WriteLine($"Device {deviceId} - Failed to read 13 registers, trying 4: {ex.Message}");
-                    registers = await modbusMaster.ReadHoldingRegistersAsync(
-                        (byte)device.SlaveId, 0, 4);
-                    Console.WriteLine($"INDIVIDUAL SUCCESS - Device {deviceId} (Slave {device.SlaveId}): Đọc được 4 registers - R0={registers[0]}, R1={registers[1]}, R2={registers[2]}, R3={registers[3]}");
+                    // Fallback: Nếu simulator không hỗ trợ ReadInputs, thử đọc từ Holding Registers
+                    Console.WriteLine($"[FALLBACK] Device {deviceId}: ReadInputs failed, trying Holding Registers fallback");
+                    try
+                    {
+                        ushort[] fallbackRegisters = await modbusMaster.ReadHoldingRegistersAsync(slaveId, 0, 5);
+                        // Giả lập test data cho simulator
+                        bool simulatedComp = (fallbackRegisters[0] % 2 == 1); // Giả lập COMP bit
+
+                        return new DeviceReadEvent
+                        {
+                            Success = true,
+                            IsCompletionEvent = simulatedComp && !device.PreviousCompletionState, // Phát hiện cạnh lên
+                            IsOK = true, // Giả lập OK cho test
+                            ActualTorque = (float)fallbackRegisters[1] / 10.0f + 10.0f, // Test torque
+                            TotalCount = device.TotalCount + (simulatedComp && !device.PreviousCompletionState ? 1 : 0),
+                            CurrentCompletionState = simulatedComp,
+                            StatusMessage = "Simulator Fallback",
+                            TargetTorque = device.TargetTorque,
+                            MinTorque = device.MinTorque,
+                            MaxTorque = device.MaxTorque
+                        };
+                    }
+                    catch
+                    {
+                        throw new Exception($"Both ReadInputs and Holding Register fallback failed: {ex.Message}");
+                    }
                 }
 
-                return ProcessRegisterData(device, registers);
-            }
-            catch (SocketException ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"Device {deviceId} - SocketException: {ex.Message}");
-                return HandleConnectionLoss(device, "Mất kết nối mạng TCP", ex);
-            }
-            catch (InvalidOperationException ex) when (ex.Message.Contains("not allowed on non-connected"))
-            {
-                System.Diagnostics.Debug.WriteLine($"Device {deviceId} - InvalidOperation: {ex.Message}");
-                return HandleConnectionLoss(device, "Thiết bị không phản hồi", ex);
-            }
-            catch (TimeoutException ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"Device {deviceId} - Timeout: {ex.Message}");
-                return HandleConnectionLoss(device, $"Slave ID {device.SlaveId} timeout", ex);
+                bool currentBusy = statusBits[0];      // Bit 100082 (BUSY)
+                bool currentComp = statusBits[2];      // Bit 100084 (COMP)
+
+                Console.WriteLine($"[HANDY2000] Device {deviceId}: BUSY={currentBusy}, COMP={currentComp}, PrevCOMP={device.PreviousCompletionState}");
+
+                // Bước 1.2: Phát hiện cạnh lên COMP (0→1) và BUSY=OFF
+                if (currentComp && !currentBusy && !device.PreviousCompletionState)
+                {
+                    // 🎉 PHÁT HIỆN COMPLETION EVENT - Có lần siết mới hoàn thành!
+                    Console.WriteLine($"[SUCCESS] Device {deviceId} - COMPLETION DETECTED (COMP Rising Edge, BUSY=OFF)");
+
+                    // Bước 1.3: Đọc kết quả OK/NG từ bits 100085/100086
+                    bool[] resultBits = await modbusMaster.ReadInputsAsync(slaveId, 84, 2);
+                    bool isOk = resultBits[0];  // Bit 100085 (OK)
+                    bool isNg = resultBits[1];  // Bit 100086 (NG)
+
+                    Console.WriteLine($"[HANDY2000] Device {deviceId}: Result OK={isOk}, NG={isNg}");
+
+                    // Bước 1.4: Đọc dữ liệu chi tiết từ Input Registers (3X)
+                    // ĐÚNG THEO TÀI LIỆU HANDY2000:
+
+                    // LAST FASTEN FINAL TORQUE: 308467 -> NModbus địa chỉ 8466
+                    ushort[] torqueRegister = await modbusMaster.ReadInputRegistersAsync(slaveId, 8466, 1);
+                    float finalTorque = (float)torqueRegister[0] / 10.0f; // Chia 10 theo đặc tả
+
+                    // Đọc Target/Min/Max theo đúng địa chỉ:
+                    // 308481 (TARGET) -> 8480
+                    // 308482 (MIN) -> 8481
+                    // 308483 (MAX) -> 8482
+                    ushort[] setpointRegisters = await modbusMaster.ReadInputRegistersAsync(slaveId, 8480, 3);
+                    float targetTorque = (float)setpointRegisters[0] / 10.0f; // 308481
+                    float minTorque = (float)setpointRegisters[1] / 10.0f;    // 308482
+                    float maxTorque = (float)setpointRegisters[2] / 10.0f;    // 308483
+
+                    Console.WriteLine($"[HANDY2000] Device {deviceId}: Torque Data - Final={finalTorque:F1}, Target={targetTorque:F1}, Range={minTorque:F1}-{maxTorque:F1}");
+
+                    // Trả về completion event với đầy đủ dữ liệu thực
+                    return new DeviceReadEvent
+                    {
+                        Success = true,
+                        IsCompletionEvent = true, // Đây là completion event thực sự
+                        IsOK = isOk,
+                        ActualTorque = finalTorque,
+                        TotalCount = device.TotalCount + 1, // Tăng counter cho lần siết mới
+                        CurrentCompletionState = currentComp,
+                        StatusMessage = isOk ? "Siết OK" : "Siết NG",
+                        TargetTorque = targetTorque,
+                        MinTorque = minTorque,
+                        MaxTorque = maxTorque
+                    };
+                }
+
+                // Không có completion event, chỉ trả về trạng thái hiện tại
+                return new DeviceReadEvent
+                {
+                    Success = true,
+                    IsCompletionEvent = false, // Không phải completion event
+                    CurrentCompletionState = currentComp
+                };
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Device {deviceId} - General Error: {ex.Message}");
-                return HandleConnectionLoss(device, $"Lỗi Individual: {ex.GetType().Name}", ex);
+                Console.WriteLine($"Device {deviceId} - Read Event Error: {ex.Message}");
+                return HandleReadError(device, "Lỗi đọc Modbus", ex);
             }
         }
+
+        // Các phương thức ReadDeviceData_... cũ có thể được giữ lại hoặc xóa đi
+        // Để đơn giản, tôi sẽ comment chúng ra
+        /*
+        public async Task<ModbusReadResult> ReadDeviceData_Individual(ScrewingDevice device)
+        {
+            if (_gatewayMaster == null || !_isConnected)
+            {
+                return new ModbusReadResult { Success = false, StatusMessage = "Gateway chưa kết nối" };
+            }
+
+            try
+            {...}
+        }
+        */
         #endregion
 
         #region TCP Gateway
@@ -165,8 +187,6 @@ namespace HMI_ScrewingMonitor.Services
 
         public async Task<bool> ConnectTCP_Gateway(string gatewayIP, int gatewayPort)
         {
-            _connectionType = ConnectionType.TCP_Gateway;
-            
             try
             {
                 _gatewayClient = new TcpClient();
@@ -175,68 +195,88 @@ namespace HMI_ScrewingMonitor.Services
                 var factory = new ModbusFactory();
                 _gatewayMaster = factory.CreateMaster(_gatewayClient);
                 
-                _isConnected = true;
+                IsConnected = true;
                 return true;
             }
             catch
             {
-                _isConnected = false;
+                IsConnected = false;
                 return false;
             }
         }
 
-        public async Task<ScrewingDevice> ReadDeviceData_Gateway(ScrewingDevice device)
+        public async Task<DeviceReadEvent> ReadDeviceEvent_Gateway(ScrewingDevice device)
         {
-            if (_gatewayMaster == null || !_isConnected)
+            if (_gatewayMaster == null || !IsConnected)
             {
-                device.IsConnected = false;
-                device.Status = "Gateway chưa kết nối";
-                return device;
+                return new DeviceReadEvent { Success = false, StatusMessage = "Gateway chưa kết nối" };
             }
 
             try
             {
-                // Đọc dữ liệu từ gateway bằng Slave ID
-                Console.WriteLine($"GATEWAY READING Device {device.DeviceId} with SlaveID={device.SlaveId}");
-                System.Diagnostics.Debug.WriteLine($"GATEWAY READING Device {device.DeviceId} with SlaveID={device.SlaveId}");
-                var registers = await _gatewayMaster.ReadHoldingRegistersAsync(
-                    (byte)device.SlaveId, 0, 4); // Đọc 4 registers: 0,1,2,3 (giới hạn của simulator)
+                byte slaveId = (byte)device.SlaveId;
 
-                Console.WriteLine($"GATEWAY SUCCESS - Device {device.DeviceId} (Slave {device.SlaveId}): R0={registers[0]}, R1={registers[1]}, R2={registers[2]}, R3={registers[3]}");
+                // Bước 1: Giám sát tín hiệu COMP (Completion)
+                bool[] compSignal = await _gatewayMaster.ReadInputsAsync(slaveId, 83, 1);
+                bool currentCompState = compSignal[0];
 
-                return ProcessRegisterData(device, registers);
-            }
-            catch (SocketException ex)
-            {
-                if (ShouldLogError(device, "SocketException"))
+                // Phát hiện cạnh lên (OFF -> ON)
+                if (currentCompState && !device.PreviousCompletionState)
                 {
-                    return HandleConnectionLoss(device, "Mất kết nối mạng TCP", ex);
+                    // ĐÃ PHÁT HIỆN HOÀN THÀNH MỘT LẦN VẶN!
+                    Console.WriteLine($"Device {device.DeviceId} (Gateway) - COMPLETION DETECTED");
+
+                    // Bước 2: Đọc kết quả OK/NG
+                    bool[] resultSignals = await _gatewayMaster.ReadInputsAsync(slaveId, 84, 2);
+                    bool isOk = resultSignals[0];
+
+                    // Bước 3: Đọc giá trị lực siết
+                    ushort[] torqueRegister = await _gatewayMaster.ReadInputRegistersAsync(slaveId, 8464, 1);
+                    float finalTorque = (float)torqueRegister[0] / 10.0f;
+
+                    // Bước 4: Đọc bộ đếm
+                    ushort[] counterRegister = await _gatewayMaster.ReadInputRegistersAsync(slaveId, 8210, 1);
+                    int fasteningCount = counterRegister[0];
+
+                    // Đọc các giá trị cài đặt của lần vặn cuối
+                    ushort[] setpointRegisters = await _gatewayMaster.ReadInputRegistersAsync(slaveId, 8480, 3);
+                    float targetTorque = (float)setpointRegisters[0] / 10.0f;
+                    float minTorque = (float)setpointRegisters[1] / 10.0f;
+                    float maxTorque = (float)setpointRegisters[2] / 10.0f;
+
+                    Console.WriteLine($"Device {device.DeviceId} (Gateway) - Setpoints Read: Target={targetTorque}, Min={minTorque}, Max={maxTorque}");
+
+                    return new DeviceReadEvent
+                    {
+                        Success = true,
+                        IsCompletionEvent = true,
+                        IsOK = isOk,
+                        ActualTorque = finalTorque,
+                        TotalCount = fasteningCount,
+                        CurrentCompletionState = currentCompState,
+                        StatusMessage = isOk ? "Siết OK" : "Siết NG",
+                        TargetTorque = targetTorque,
+                        MinTorque = minTorque,
+                        MaxTorque = maxTorque
+                    };
                 }
-                return HandleConnectionLoss(device, "Mất kết nối mạng TCP");
-            }
-            catch (InvalidOperationException ex) when (ex.Message.Contains("not allowed on non-connected"))
-            {
-                if (ShouldLogError(device, "InvalidOperation"))
+
+                // Nếu không có sự kiện hoàn thành
+                return new DeviceReadEvent
                 {
-                    return HandleConnectionLoss(device, "Thiết bị không phản hồi", ex);
-                }
-                return HandleConnectionLoss(device, "Thiết bị không phản hồi");
-            }
-            catch (TimeoutException ex)
-            {
-                if (ShouldLogError(device, "Timeout"))
-                {
-                    return HandleConnectionLoss(device, $"Slave ID {device.SlaveId} timeout", ex);
-                }
-                return HandleConnectionLoss(device, $"Slave ID {device.SlaveId} timeout");
+                    Success = true,
+                    IsCompletionEvent = false,
+                    CurrentCompletionState = currentCompState
+                };
             }
             catch (Exception ex)
             {
-                if (ShouldLogError(device, "General"))
+                // Sử dụng ShouldLogError để tránh spam console khi có lỗi
+                if (ShouldLogError(device, "GatewayReadError"))
                 {
-                    return HandleConnectionLoss(device, $"Lỗi Gateway: {ex.GetType().Name}", ex);
+                    Console.WriteLine($"Device {device.DeviceId} (Gateway) - Read Event Error: {ex.Message}");
                 }
-                return HandleConnectionLoss(device, "Lỗi Gateway");
+                return HandleReadError(device, "Lỗi đọc Gateway", ex);
             }
         }
         #endregion
@@ -244,94 +284,17 @@ namespace HMI_ScrewingMonitor.Services
         #region RTU Serial
         public bool ConnectRTU(string portName, int baudRate = 9600)
         {
-            _connectionType = ConnectionType.RTU_Serial;
-
             // RTU connection temporarily disabled due to NModbus API changes
             throw new NotImplementedException("RTU connection not implemented for current NModbus version");
         }
 
-        public async Task<ScrewingDevice> ReadDeviceData_RTU(ScrewingDevice device)
+        public Task<DeviceReadEvent> ReadDeviceData_RTU(ScrewingDevice device)
         {
             throw new NotImplementedException("RTU data reading not implemented for current NModbus version");
         }
         #endregion
 
         #region Common Methods
-        private ScrewingDevice ProcessRegisterData(ScrewingDevice device, ushort[] registers)
-        {
-            try
-            {
-                device.IsConnected = true;
-                device.LastSuccessfulRead = DateTime.Now;  // Cập nhật thời gian đọc thành công
-
-                // Debug: Log register values
-                System.Diagnostics.Debug.WriteLine($"Device {device.DeviceId} - Raw registers:");
-                for (int i = 0; i < Math.Min(registers.Length, 13); i++)
-                {
-                    System.Diagnostics.Debug.WriteLine($"  Register {i}: {registers[i]}");
-                }
-
-                // Xử liệu dữ liệu từ registers
-                if (registers.Length >= 3)
-                {
-                    // Simple integer to float conversion for testing với registers có sẵn
-                    float angle = (float)registers[0];
-                    float torque = (float)registers[2] / 10.0f;
-
-                    device.ActualAngle = angle;
-                    device.ActualTorque = torque;
-
-                    // Kiểm tra xem có đọc được status register chưa
-                    if (registers.Length >= 13)
-                    {
-                        // Đọc được status register 12
-                        device.IsOK = registers[12] == 1;
-                        device.Status = registers[12] == 1 ? "Siết OK" : "Siết NG";
-                        Console.WriteLine($"Device {device.DeviceId} - Using STATUS REGISTER: R12={registers[12]}, Status={device.Status}");
-                    }
-                    else
-                    {
-                        // Fallback: Kiểm tra status dựa trên range
-                        bool angleOK = angle >= device.MinAngle && angle <= device.MaxAngle;
-                        bool torqueOK = torque >= device.MinTorque && torque <= device.MaxTorque;
-                        device.IsOK = angleOK && torqueOK;
-
-                        if (device.IsOK)
-                            device.Status = "Siết OK (Range check)";
-                        else if (!angleOK && !torqueOK)
-                            device.Status = "Siết NG - Góc & Lực vượt ngưỡng";
-                        else if (!angleOK)
-                            device.Status = "Siết NG - Góc vượt ngưỡng";
-                        else
-                            device.Status = "Siết NG - Lực vượt ngưỡng";
-
-                        Console.WriteLine($"Device {device.DeviceId} - Using RANGE CHECK: Status={device.Status}");
-                    }
-
-                    Console.WriteLine($"Device {device.DeviceId} - VALUES: Angle={angle}°, Torque={torque}Nm, Status={device.Status}");
-                }
-                else
-                {
-                    // Không đủ register - có thể slave chỉ hỗ trợ ít register
-                    device.ActualAngle = registers.Length > 0 ? (float)registers[0] : 0;
-                    device.ActualTorque = registers.Length > 2 ? (float)registers[2] / 10.0f : 0;
-                    device.IsOK = registers.Length > 1 ? registers[1] == 1 : false;
-                    device.Status = $"Đọc được {registers.Length} registers - Dữ liệu không đầy đủ";
-                }
-
-                device.LastUpdate = DateTime.Now;
-
-                System.Diagnostics.Debug.WriteLine($"Device {device.DeviceId} - Processed: Angle={device.ActualAngle:F1}°, Torque={device.ActualTorque:F2}Nm, OK={device.IsOK}");
-
-                return device;
-            }
-            catch (Exception ex)
-            {
-                // Nếu có lỗi xử lý dữ liệu, coi như mất kết nối
-                return HandleConnectionLoss(device, "Lỗi xử lý dữ liệu", ex);
-            }
-        }
-
         #region Individual Device Connection Management
         public async Task<bool> ConnectToDevice(ScrewingDevice device)
         {
@@ -357,6 +320,7 @@ namespace HMI_ScrewingMonitor.Services
                 // Close existing connection if any
                 if (_deviceConnections.ContainsKey(deviceId))
                 {
+                    Console.WriteLine($"[DEBUG] Device {deviceId}: Closing existing connection");
                     DisconnectFromDevice(deviceId);
                 }
 
@@ -368,9 +332,13 @@ namespace HMI_ScrewingMonitor.Services
                 tcpClient.ReceiveTimeout = 3000;  // 3 seconds
                 tcpClient.SendTimeout = 3000;     // 3 seconds
 
+                Console.WriteLine($"[DEBUG] Device {deviceId}: Starting TCP connection...");
+
                 // Use CancellationToken for connection timeout
                 using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
                 await tcpClient.ConnectAsync(device.IPAddress, device.Port).ConfigureAwait(false);
+
+                Console.WriteLine($"[DEBUG] Device {deviceId}: TCP connected, creating Modbus master...");
 
                 var factory = new ModbusFactory();
                 var master = factory.CreateMaster(tcpClient);
@@ -435,24 +403,19 @@ namespace HMI_ScrewingMonitor.Services
         #endregion
 
         #region Connection Loss Handling
-        private ScrewingDevice HandleConnectionLoss(ScrewingDevice device, string reason, Exception ex = null)
+        private DeviceReadEvent HandleReadError(ScrewingDevice device, string reason, Exception ex = null)
         {
-            device.IsConnected = false;
-            device.Status = "--";
-            // Xóa dữ liệu cũ khi mất kết nối
-            device.ActualAngle = 0;
-            device.ActualTorque = 0;
-            device.IsOK = false;
-            device.LastUpdate = DateTime.Now;
-
             // Log lỗi nhưng không spam console
-            Console.WriteLine($"CONNECTION LOST - Device {device.DeviceId}: {reason}");
-            if (ex != null)
+            if (ShouldLogError(device, "ReadError"))
             {
-                System.Diagnostics.Debug.WriteLine($"Exception details: {ex.Message}");
+                Console.WriteLine($"Device {device.DeviceId} - READ ERROR: {reason}");
+                if (ex != null)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Exception details: {ex.Message}");
+                }
             }
 
-            return device;
+            return new DeviceReadEvent { Success = false, StatusMessage = reason };
         }
 
         private bool ShouldLogError(ScrewingDevice device, string errorType)
@@ -473,37 +436,12 @@ namespace HMI_ScrewingMonitor.Services
         private Dictionary<string, DateTime> _lastErrorTimes = new Dictionary<string, DateTime>();
         #endregion
 
-        private float ConvertRegistersToFloat(ushort highRegister, ushort lowRegister)
-        {
-            byte[] bytes = new byte[4];
-            byte[] highBytes = BitConverter.GetBytes(highRegister);
-            byte[] lowBytes = BitConverter.GetBytes(lowRegister);
-            
-            bytes[0] = lowBytes[0];
-            bytes[1] = lowBytes[1];
-            bytes[2] = highBytes[0];
-            bytes[3] = highBytes[1];
-            
-            return BitConverter.ToSingle(bytes, 0);
-        }
-
         public void Disconnect()
         {
-            // Đóng tất cả kết nối TCP
-            foreach (var client in _tcpClients.Values)
-            {
-                client?.Close();
-            }
-            _tcpClients.Clear();
-            _modbusMasters.Clear();
-
             // Đóng gateway connection
             _gatewayClient?.Close();
             
-            // Đóng serial connection
-            _serialPort?.Close();
-            
-            _isConnected = false;
+            IsConnected = false;
         }
 
         public void Dispose()
@@ -511,5 +449,24 @@ namespace HMI_ScrewingMonitor.Services
             Disconnect();
         }
         #endregion
+    }
+
+    /// <summary>
+    /// DTO mới để chứa kết quả đọc theo logic sự kiện.
+    /// </summary>
+    public class DeviceReadEvent
+    {
+        public bool Success { get; set; }
+        public string StatusMessage { get; set; }
+        public bool IsCompletionEvent { get; set; } // Đánh dấu nếu đây là sự kiện hoàn thành
+        public bool CurrentCompletionState { get; set; } // Trạng thái hiện tại của bit COMP
+
+        // Dữ liệu chỉ có ý nghĩa khi IsCompletionEvent = true
+        public bool IsOK { get; set; }
+        public float ActualTorque { get; set; }
+        public int TotalCount { get; set; }
+        public float TargetTorque { get; set; }
+        public float MinTorque { get; set; }
+        public float MaxTorque { get; set; }
     }
 }

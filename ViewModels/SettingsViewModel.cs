@@ -18,7 +18,6 @@ namespace HMI_ScrewingMonitor.ViewModels
 
         public ObservableCollection<DeviceConfig> Devices { get; set; }
         public ModbusSettingsConfig ModbusSettings { get; set; }
-        public RegisterMappingConfig RegisterMapping { get; set; }
         public UISettingsConfig UISettings { get; set; }
 
         public DeviceConfig SelectedDevice
@@ -43,7 +42,6 @@ namespace HMI_ScrewingMonitor.ViewModels
         {
             Devices = new ObservableCollection<DeviceConfig>();
             ModbusSettings = new ModbusSettingsConfig();
-            RegisterMapping = new RegisterMappingConfig();
             UISettings = new UISettingsConfig();
 
             // Initialize commands
@@ -66,8 +64,11 @@ namespace HMI_ScrewingMonitor.ViewModels
                 IPAddress = "192.168.1.100",
                 Port = 502,
                 SlaveId = Devices.Count + 1,
-                MinAngle = 40.0,
-                MaxAngle = 50.0,
+                DeviceModel = "ABC",
+                TargetTorque = 10.0,
+                TotalCount = 100,
+                OKCount = 90,
+                NGCount = 10,
                 MinTorque = 7.0,
                 MaxTorque = 10.0,
                 Enabled = true
@@ -109,7 +110,6 @@ namespace HMI_ScrewingMonitor.ViewModels
                 {
                     Devices = Devices.ToList(),
                     ModbusSettings = ModbusSettings,
-                    RegisterMapping = RegisterMapping,
                     UI = UISettings
                 };
 
@@ -159,7 +159,6 @@ namespace HMI_ScrewingMonitor.ViewModels
                         }
 
                         ModbusSettings = config.ModbusSettings ?? new ModbusSettingsConfig();
-                        RegisterMapping = config.RegisterMapping ?? new RegisterMappingConfig();
                         UISettings = config.UI ?? new UISettingsConfig();
 
                         SelectedDevice = Devices.FirstOrDefault();
@@ -191,8 +190,11 @@ namespace HMI_ScrewingMonitor.ViewModels
                     IPAddress = $"192.168.1.{99 + i}",
                     Port = 502,
                     SlaveId = i,
-                    MinAngle = 40.0,
-                    MaxAngle = 50.0,
+                    DeviceModel = $"D{i:00}",
+                    TargetTorque = 8.0 + i * 0.3,
+                    TotalCount = 100 + i * 5,
+                    OKCount = 85 + i * 3,
+                    NGCount = 10 + i,
                     MinTorque = 7.0 + i * 0.5,
                     MaxTorque = 10.0 + i * 0.5,
                     Enabled = i <= 3 // Enable first 3 devices by default
@@ -200,7 +202,6 @@ namespace HMI_ScrewingMonitor.ViewModels
             }
 
             ModbusSettings = new ModbusSettingsConfig();
-            RegisterMapping = new RegisterMappingConfig();
             UISettings = new UISettingsConfig();
 
             SelectedDevice = Devices.FirstOrDefault();
@@ -225,7 +226,6 @@ namespace HMI_ScrewingMonitor.ViewModels
     {
         public List<DeviceConfig> Devices { get; set; } = new();
         public ModbusSettingsConfig ModbusSettings { get; set; } = new();
-        public RegisterMappingConfig RegisterMapping { get; set; } = new();
         public UISettingsConfig UI { get; set; } = new();
     }
 
@@ -233,13 +233,16 @@ namespace HMI_ScrewingMonitor.ViewModels
     {
         public int DeviceId { get; set; }
         public string DeviceName { get; set; } = "";
+        public string DeviceModel { get; set; } = "ABC";
         public string IPAddress { get; set; } = "";
         public int Port { get; set; } = 502;
         public int SlaveId { get; set; }
-        public double MinAngle { get; set; }
-        public double MaxAngle { get; set; }
         public double MinTorque { get; set; }
         public double MaxTorque { get; set; }
+        public double TargetTorque { get; set; }
+        public int TotalCount { get; set; } = 100;
+        public int OKCount { get; set; } = 90;
+        public int NGCount { get; set; } = 10;
         public bool Enabled { get; set; } = true;
     }
 
@@ -254,17 +257,6 @@ namespace HMI_ScrewingMonitor.ViewModels
         public int RetryCount { get; set; } = 3;
         public int ScanInterval { get; set; } = 1000;
         public string Note { get; set; } = "ConnectionType options: TCP_Individual, TCP_Gateway, RTU_Serial";
-    }
-
-    public class RegisterMappingConfig
-    {
-        public int ActualAngleStart { get; set; } = 0;
-        public int ActualTorqueStart { get; set; } = 2;
-        public int MinAngleStart { get; set; } = 4;
-        public int MaxAngleStart { get; set; } = 6;
-        public int MinTorqueStart { get; set; } = 8;
-        public int MaxTorqueStart { get; set; } = 10;
-        public int StatusRegister { get; set; } = 12;
     }
 
     public class UISettingsConfig

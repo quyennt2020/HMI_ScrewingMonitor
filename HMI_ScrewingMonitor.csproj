@@ -7,9 +7,12 @@
     <AssemblyDescription>HMI application for monitoring screwing devices via Modbus</AssemblyDescription>
     <AssemblyVersion>1.0.0.0</AssemblyVersion>
     <FileVersion>1.0.0.0</FileVersion>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <GenerateTargetFrameworkAttribute>false</GenerateTargetFrameworkAttribute>
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
     <PackageReference Include="NModbus" Version="3.0.72" />
     <PackageReference Include="System.IO.Ports" Version="7.0.0" />
   </ItemGroup>

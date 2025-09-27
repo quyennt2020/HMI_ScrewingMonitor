@@ -1,82 +1,55 @@
 using System;
 using System.Net.Sockets;
 using System.Threading.Tasks;
+using System.Threading;
 using NModbus;
+using System.Text;
 
 namespace HMI_ScrewingMonitor
 {
     public class ModbusDebugTest
     {
-        public static async Task Main(string[] args)
+        public static async Task RunRegisterReadTest()
         {
-            Console.WriteLine("=== MODBUS DEBUG TEST ===");
-            Console.WriteLine("Testing TCP Gateway connection to 127.0.0.1:502");
-            Console.WriteLine("Reading from Slave ID 1 and Slave ID 2");
+            // Sửa lỗi hiển thị tiếng Việt trên Console
+            Console.OutputEncoding = Encoding.UTF8;
+
+            Console.WriteLine("=============================================");
+            Console.WriteLine("===   MODBUS REGISTER READ TEST           ===");
+            Console.WriteLine("=============================================");
+            Console.WriteLine("Mục tiêu: Kiểm tra đọc bit COMP (100084) từ Slave ID 1.");
+            Console.WriteLine("Kết nối tới: 127.0.0.1, Port: 502");
             Console.WriteLine();
 
             try
             {
-                // Kết nối TCP Gateway
                 using var tcpClient = new TcpClient();
-                await tcpClient.ConnectAsync("127.0.0.1", 502);
-                Console.WriteLine("✓ TCP connected to 127.0.0.1:502");
+                // Thêm timeout 5 giây để tránh bị treo
+                using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+                await tcpClient.ConnectAsync("127.0.0.1", 502, cts.Token);
+
+                Console.WriteLine("[OK] Đã kết nối TCP tới 127.0.0.1:502");
 
                 var factory = new ModbusFactory();
                 var master = factory.CreateMaster(tcpClient);
-                Console.WriteLine("✓ Modbus master created");
+                Console.WriteLine("[OK] Đã tạo Modbus Master.");
+                Console.WriteLine();
+                Console.WriteLine("Bắt đầu đọc trạng thái bit COMP (địa chỉ 100084) mỗi giây...");
+                Console.WriteLine("----------------------------------------------------------");
+                Console.WriteLine("Bây giờ, hãy thử BẬT/TẮT bit ở địa chỉ 84 trong Modbus Simulator.");
                 Console.WriteLine();
 
-                // Test đọc từ Slave ID 1
-                Console.WriteLine("--- READING FROM SLAVE ID 1 ---");
-                try
+                while (true)
                 {
-                    var registers1 = await master.ReadHoldingRegistersAsync(1, 0, 13);
-                    Console.WriteLine($"Slave 1 - Successfully read {registers1.Length} registers:");
-                    for (int i = 0; i < registers1.Length; i++)
-                    {
-                        Console.WriteLine($"  R{i}: {registers1[i]}");
-                    }
-
-                    float angle1 = (float)registers1[0];
-                    float torque1 = (float)registers1[2] / 10.0f;
-                    bool status1 = registers1[12] == 1;
-                    Console.WriteLine($"Slave 1 PROCESSED: Angle={angle1}°, Torque={torque1}Nm, Status={status1}");
+                    // Đọc bit COMP (Input Status 100084 -> địa chỉ 83) từ Slave ID 1
+                    bool[] compSignal = await master.ReadInputsAsync(1, 83, 1);
+                    Console.WriteLine($"[{DateTime.Now:HH:mm:ss}] Trạng thái bit COMP (100084) là: {compSignal[0]}");
+                    await Task.Delay(1000); // Chờ 1 giây
                 }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"Slave 1 ERROR: {ex.Message}");
-                }
-                Console.WriteLine();
-
-                // Test đọc từ Slave ID 2
-                Console.WriteLine("--- READING FROM SLAVE ID 2 ---");
-                try
-                {
-                    var registers2 = await master.ReadHoldingRegistersAsync(2, 0, 13);
-                    Console.WriteLine($"Slave 2 - Successfully read {registers2.Length} registers:");
-                    for (int i = 0; i < registers2.Length; i++)
-                    {
-                        Console.WriteLine($"  R{i}: {registers2[i]}");
-                    }
-
-                    float angle2 = (float)registers2[0];
-                    float torque2 = (float)registers2[2] / 10.0f;
-                    bool status2 = registers2[12] == 1;
-                    Console.WriteLine($"Slave 2 PROCESSED: Angle={angle2}°, Torque={torque2}Nm, Status={status2}");
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"Slave 2 ERROR: {ex.Message}");
-                }
-
-                Console.WriteLine();
-                Console.WriteLine("=== TEST COMPLETE ===");
-                Console.WriteLine("Press any key to exit...");
-                Console.ReadKey();
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"CONNECTION ERROR: {ex.Message}");
+                Console.WriteLine($"[LỖI] Không thể thực hiện bài test: {ex.Message}");
                 Console.ReadKey();
             }
         }

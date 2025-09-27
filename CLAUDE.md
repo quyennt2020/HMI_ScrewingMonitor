@@ -40,6 +40,16 @@ dotnet run
 dotnet run --configuration Release
 ```
 
+### Testing
+```bash
+# Run console test application
+cd HMI_TestRunner
+dotnet run
+
+# Run specific test project
+dotnet run --project HMI_TestRunner
+```
+
 ## Architecture Overview
 
 This is a **WPF .NET 6 application** that monitors screwing devices via **Modbus communication** using the **MVVM pattern**. The application provides real-time monitoring of multiple screwing devices with visual status indicators.
@@ -61,13 +71,15 @@ This is a **WPF .NET 6 application** that monitors screwing devices via **Modbus
 ### Project Structure
 
 ```
-├── Models/               # Data models (ScrewingDevice)
-├── Services/            # Business logic (ModbusService)
-├── ViewModels/          # MVVM view models (MainViewModel)
-├── Views/               # XAML UI files (MainWindow)
+├── Models/               # Data models (ScrewingDevice, TorqueDataPoint)
+├── Services/            # Business logic (ModbusService, LoggingService)
+├── ViewModels/          # MVVM view models (MainViewModel, SettingsViewModel)
+├── Views/               # XAML UI files (MainWindow, SettingsWindow)
+├── Controls/            # Custom WPF controls (TorqueChart)
 ├── Converters/          # Value converters for data binding
 ├── Resources/           # UI themes and styles
-└── Config/              # JSON configuration files
+├── Config/              # JSON configuration files
+└── HMI_TestRunner/      # Console test application
 ```
 
 ## Key Components
@@ -86,6 +98,19 @@ This is a **WPF .NET 6 application** that monitors screwing devices via **Modbus
 - Model representing a screwing device with properties for angle, torque, and status
 - Implements INotifyPropertyChanged for UI binding
 - Contains computed properties for status display
+
+### LoggingService.cs
+- Handles CSV logging of screwing events to daily log files
+- Thread-safe file writing using locks
+- Automatic directory creation in `HistoryLogs/`
+- Logs torque values, timestamps, and pass/fail results
+
+### TorqueChart.cs (Custom Control)
+- Real-time visualization of torque data history
+- Custom WPF Canvas-based control with data binding
+- Displays min/max torque limits as reference lines
+- Interactive tooltips showing value and timestamp
+- Auto-scaling with padding around configured ranges
 
 ### Device Configuration
 Device settings are stored in `Config/devices.json` with structure:
@@ -110,6 +135,7 @@ The application expects the following register layout per device:
 ### NuGet Packages
 - **NModbus** (3.0.72): Modbus communication library
 - **System.IO.Ports** (7.0.0): Serial port communication for RTU
+- **Newtonsoft.Json** (13.0.4): JSON serialization/deserialization
 
 ### Framework
 - **.NET 6.0 Windows**: Target framework with WPF support
@@ -129,3 +155,23 @@ The application expects the following register layout per device:
 - Global exception handling in App.xaml.cs
 - Per-device error handling in timer polling
 - Connection status tracking per device
+
+### Testing
+The `HMI_TestRunner` project provides console-based unit tests for:
+- ScrewingDevice model creation and property changes
+- MainViewModel initialization and device management
+- ModbusService creation and connection states
+- Tests run automatically and display pass/fail results with detailed output
+
+### Data Visualization
+- Custom `TorqueChart` control for real-time torque graphing
+- Automatic scaling based on configured min/max values with padding
+- Interactive data points with hover tooltips
+- Reference lines for acceptable torque ranges
+- Chart automatically updates when new data points are added
+
+### Logging and History
+- Automatic CSV logging to `HistoryLogs/` directory
+- Daily log files with timestamp, device info, torque values, and results
+- Thread-safe logging operations to prevent data corruption
+- Logs are created asynchronously to avoid blocking the UI thread

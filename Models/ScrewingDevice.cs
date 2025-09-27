@@ -1,28 +1,66 @@
 using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Linq;
 
 namespace HMI_ScrewingMonitor.Models
 {
+    public class TorqueDataPoint
+    {
+        public float Value { get; set; }
+        public DateTime Timestamp { get; set; }
+
+        public TorqueDataPoint(float value, DateTime timestamp)
+        {
+            Value = value;
+            Timestamp = timestamp;
+        }
+    }
+
     public class ScrewingDevice : INotifyPropertyChanged
     {
         private bool _isConnected = false;
         private string _status = "--";
         private bool _isOK = false;
-        private float _actualAngle = 0.0f;
         private float _actualTorque = 0.0f;
-        private float _minAngle = 40.0f;
-        private float _maxAngle = 50.0f;
-        private float _minTorque = 7.0f;
-        private float _maxTorque = 10.0f;
+        private float _targetTorque = 12.0f;
+        private float _minTorque = 9.8f;
+        private float _maxTorque = 14.0f;
+        private int _totalCount = 100;
+        private int _okCount = 90;
+        private int _ngCount = 10;
+        private ObservableCollection<TorqueDataPoint> _torqueHistory = new ObservableCollection<TorqueDataPoint>();
+        private string _deviceModel = "ABC";
         private DateTime _lastUpdate = DateTime.Now;
         private DateTime _lastSuccessfulRead = DateTime.MinValue;
         private bool _enabled = true;
+        private bool _hasRealData = false;
+
+        // Thuộc tính để theo dõi trạng thái của tín hiệu COMP
+        public bool PreviousCompletionState { get; set; } = false;
+
+        public ScrewingDevice()
+        {
+            // Vô hiệu hóa việc tạo dữ liệu demo để biểu đồ bắt đầu trống
+            // InitializeDemoData();
+        }
 
         public int DeviceId { get; set; }
         public string DeviceName { get; set; }
         public string IPAddress { get; set; }
         public int Port { get; set; } = 502;
         public int SlaveId { get; set; } = 1;
+
+        public string DeviceModel
+        {
+            get => _deviceModel;
+            set
+            {
+                _deviceModel = value;
+                OnPropertyChanged(nameof(DeviceModel));
+            }
+        }
 
         public bool Enabled
         {
@@ -78,51 +116,36 @@ namespace HMI_ScrewingMonitor.Models
             }
         }
 
-        public float ActualAngle
-        {
-            get => _actualAngle;
-            set
-            {
-                _actualAngle = value;
-                System.Diagnostics.Debug.WriteLine($"Device {DeviceId} - UI UPDATE: ActualAngle set to {value}°");
-                OnPropertyChanged(nameof(ActualAngle));
-                OnPropertyChanged(nameof(AngleStatus));
-            }
-        }
 
         public float ActualTorque
         {
             get => _actualTorque;
             set
             {
-                _actualTorque = value;
-                System.Diagnostics.Debug.WriteLine($"Device {DeviceId} - UI UPDATE: ActualTorque set to {value} Nm");
-                OnPropertyChanged(nameof(ActualTorque));
-                OnPropertyChanged(nameof(TorqueStatus));
+                // Only update if value actually changed
+                if (Math.Abs(_actualTorque - value) > 0.01f)
+                {
+                    _actualTorque = value;
+
+                    // Use new method to add real torque data
+                    AddRealTorqueData(value);
+
+                    OnPropertyChanged(nameof(ActualTorque));
+                    OnPropertyChanged(nameof(StandardRange));
+                }
             }
         }
 
-        public float MinAngle
+        public float TargetTorque
         {
-            get => _minAngle;
+            get => _targetTorque;
             set
             {
-                _minAngle = value;
-                OnPropertyChanged(nameof(MinAngle));
-                OnPropertyChanged(nameof(AngleStatus));
+                _targetTorque = value;
+                OnPropertyChanged(nameof(TargetTorque));
             }
         }
 
-        public float MaxAngle
-        {
-            get => _maxAngle;
-            set
-            {
-                _maxAngle = value;
-                OnPropertyChanged(nameof(MaxAngle));
-                OnPropertyChanged(nameof(AngleStatus));
-            }
-        }
 
         public float MinTorque
         {
@@ -131,7 +154,7 @@ namespace HMI_ScrewingMonitor.Models
             {
                 _minTorque = value;
                 OnPropertyChanged(nameof(MinTorque));
-                OnPropertyChanged(nameof(TorqueStatus));
+                OnPropertyChanged(nameof(StandardRange));
             }
         }
 
@@ -142,7 +165,7 @@ namespace HMI_ScrewingMonitor.Models
             {
                 _maxTorque = value;
                 OnPropertyChanged(nameof(MaxTorque));
-                OnPropertyChanged(nameof(TorqueStatus));
+                OnPropertyChanged(nameof(StandardRange));
             }
         }
 
@@ -167,12 +190,46 @@ namespace HMI_ScrewingMonitor.Models
             }
         }
 
+        public int TotalCount
+        {
+            get => _totalCount;
+            set
+            {
+                _totalCount = value;
+                OnPropertyChanged(nameof(TotalCount));
+            }
+        }
+
+        public int OKDeviceCount
+        {
+            get => _okCount;
+            set
+            {
+                _okCount = value;
+                OnPropertyChanged(nameof(OKDeviceCount));
+            }
+        }
+
+        public int NGDeviceCount
+        {
+            get => _ngCount;
+            set
+            {
+                _ngCount = value;
+                OnPropertyChanged(nameof(NGDeviceCount));
+            }
+        }
+
+        public ObservableCollection<TorqueDataPoint> TorqueHistory
+        {
+            get => _torqueHistory;
+        }
+
         // Computed Properties
         public string ResultText => !IsConnected ? "--" : (IsOK ? "OK" : "NG");
         public string ResultColor => !IsConnected ? "Gray" : (IsOK ? "Green" : "Red");
         public string StatusColor => IsConnected ? "Green" : "Red";
-        public string AngleStatus => $"{ActualAngle:F1}° ({MinAngle:F1}-{MaxAngle:F1})";
-        public string TorqueStatus => $"{ActualTorque:F2}Nm ({MinTorque:F2}-{MaxTorque:F2})";
+        public string StandardRange => $"{MinTorque:F1}~{MaxTorque:F1}";
 
         // Device Status Visual Indicators
         public string DeviceStatusText
@@ -228,6 +285,69 @@ namespace HMI_ScrewingMonitor.Models
         // Health check - thiết bị healthy nếu đọc thành công trong vòng 10 giây
         public bool IsHealthy => LastSuccessfulRead != DateTime.MinValue &&
                                 DateTime.Now - LastSuccessfulRead < TimeSpan.FromSeconds(10);
+
+        private void InitializeDemoData()
+        {
+            // Initialize with 30 demo data points only if no real data exists
+            // This ensures chart always shows full data for demo purposes
+            var random = new Random();
+            var baseTime = DateTime.Now.AddMinutes(-30);
+
+            for (int i = 0; i < 30; i++)
+            {
+                // Create more realistic torque variation around target value
+                var variation = (float)(random.NextDouble() * 4.0 - 2.0); // -2 to +2 Nm variation
+                var value = _targetTorque + variation;
+
+                // Ensure value stays within reasonable bounds
+                value = Math.Max(8.0f, Math.Min(16.0f, value));
+
+                var timestamp = baseTime.AddMinutes(i);
+                _torqueHistory.Add(new TorqueDataPoint(value, timestamp));
+            }
+        }
+
+        // Method to replace demo data with real data when device connects
+        public void AddRealTorqueData(float torqueValue)
+        {
+            // Force clear demo data on first real data
+            if (!_hasRealData)
+            {
+                Console.WriteLine($"Device {DeviceId} - FIRST REAL DATA: Clearing {_torqueHistory.Count} demo points");
+                _torqueHistory.Clear();
+                _hasRealData = true;
+            }
+
+            var dataPoint = new TorqueDataPoint(torqueValue, DateTime.Now);
+            _torqueHistory.Add(dataPoint);
+            Console.WriteLine($"Device {DeviceId} - ADDED REAL DATA: {torqueValue:F1}Nm at {dataPoint.Timestamp:HH:mm:ss}, Total={_torqueHistory.Count}");
+
+            if (_torqueHistory.Count > 30)
+            {
+                _torqueHistory.RemoveAt(0);
+            }
+
+            OnPropertyChanged(nameof(TorqueHistory));
+        }
+
+        // Thêm phương thức này vào lớp ScrewingDevice
+        public void NotifyAllPropertiesChanged()
+        {
+            OnPropertyChanged(nameof(ActualTorque));
+            OnPropertyChanged(nameof(IsOK));
+            OnPropertyChanged(nameof(Status));
+            OnPropertyChanged(nameof(LastUpdate));
+            OnPropertyChanged(nameof(IsConnected));
+            OnPropertyChanged(nameof(DeviceStatusColor));
+            OnPropertyChanged(nameof(ResultText));
+            OnPropertyChanged(nameof(ResultBackgroundColor));
+            OnPropertyChanged(nameof(DeviceStatusText));
+            OnPropertyChanged(nameof(DeviceBorderColor));
+            // Quan trọng: Thông báo cho biểu đồ rằng collection đã thay đổi,
+            // mặc dù không có mục mới nào được thêm vào ở đây,
+            // nhưng nó đảm bảo biểu đồ được vẽ lại.
+            OnPropertyChanged(nameof(TorqueHistory));
+        }
 
         public event PropertyChangedEventHandler PropertyChanged;
         protected virtual void OnPropertyChanged(string propertyName)

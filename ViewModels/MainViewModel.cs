@@ -11,16 +11,22 @@ using System.Windows.Threading;
 using HMI_ScrewingMonitor.Models;
 using HMI_ScrewingMonitor.Services;
 
+
 namespace HMI_ScrewingMonitor.ViewModels
 {
     public class MainViewModel : INotifyPropertyChanged, IDisposable
     {
         private readonly ModbusService _modbusService;
+        private ModbusSettingsConfig _modbusSettings; // Cache the settings
         private readonly DispatcherTimer _timer;
+        private readonly LoggingService _loggingService;
         private bool _isMonitoring = false;
         private string _connectionStatus = "Chưa kết nối";
         private int _gridColumns = 2;
         private int _gridRows = 0; // 0 = auto
+        private int _dailyOKCount = 0;
+        private int _dailyNGCount = 0;
+        private DateTime _currentDate = DateTime.Today;
 
         public ObservableCollection<ScrewingDevice> Devices { get; }
         public ICommand ConnectCommand { get; }
@@ -69,16 +75,32 @@ namespace HMI_ScrewingMonitor.ViewModels
             }
         }
 
+        public int DailyOKCount
+        {
+            get => _dailyOKCount;
+            set
+            {
+                _dailyOKCount = value;
+                OnPropertyChanged(nameof(DailyOKCount));
+            }
+        }
+
+        public int DailyNGCount
+        {
+            get => _dailyNGCount;
+            set
+            {
+                _dailyNGCount = value;
+                OnPropertyChanged(nameof(DailyNGCount));
+            }
+        }
+
         public int ConnectedDevicesCount => Devices.Count(d => d.IsConnected && d.Enabled);
         public int TotalDevices => Devices.Count(d => d.Enabled);
-        public int OKCount => Devices.Count(d => d.IsOK);
-        public int NGCount => Devices.Count(d => !d.IsOK && d.IsConnected && d.Status != "Sẵn sàng");
+        public int OKCount => Devices.Sum(d => d.OKDeviceCount);  // Tổng số lần OK của tất cả thiết bị
+        public int NGCount => Devices.Sum(d => d.NGDeviceCount);  // Tổng số lần NG của tất cả thiết bị
 
         // Progress properties for connection status
-        public string ConnectionProgress => ConnectedDevicesCount < TotalDevices && TotalDevices > 0
-            ? $"Kết nối: {ConnectedDevicesCount}/{TotalDevices}"
-            : $"Đã kết nối: {ConnectedDevicesCount} thiết bị";
-
         // Button visibility properties
         public bool CanConnect => ConnectedDevicesCount < TotalDevices; // Cho phép kết nối khi chưa kết nối hết tất cả thiết bị
         public bool CanDisconnect => ConnectedDevicesCount > 0; // Cho phép ngắt kết nối khi có ít nhất 1 thiết bị đang kết nối
@@ -88,6 +110,7 @@ namespace HMI_ScrewingMonitor.ViewModels
         public MainViewModel()
         {
             _modbusService = new ModbusService();
+            _loggingService = new LoggingService();
             Devices = new ObservableCollection<ScrewingDevice>();
 
             ConnectCommand = new RelayCommand(() => ConnectAsync());
@@ -100,7 +123,6 @@ namespace HMI_ScrewingMonitor.ViewModels
             {
                 Interval = TimeSpan.FromSeconds(1) // Cập nhật mỗi giây
             };
-            _timer.Tick += Timer_Tick;
 
             // Load devices from config first, fallback to default if needed
             LoadDevicesFromConfig();
@@ -121,8 +143,6 @@ namespace HMI_ScrewingMonitor.ViewModels
                 DeviceName = "Máy vặn vít #1",
                 IPAddress = "192.168.1.100",
                 Port = 502,
-                MinAngle = 40.0f,
-                MaxAngle = 50.0f,
                 MinTorque = 7.0f,
                 MaxTorque = 10.0f
             });
@@ -133,8 +153,6 @@ namespace HMI_ScrewingMonitor.ViewModels
                 DeviceName = "Máy vặn vít #2",
                 IPAddress = "192.168.1.101", 
                 Port = 502,
-                MinAngle = 40.0f,
-                MaxAngle = 50.0f,
                 MinTorque = 8.0f,
                 MaxTorque = 12.0f
             });
@@ -145,8 +163,6 @@ namespace HMI_ScrewingMonitor.ViewModels
                 DeviceName = "Máy vặn vít #3",
                 IPAddress = "192.168.1.102", 
                 Port = 502,
-                MinAngle = 40.0f,
-                MaxAngle = 50.0f,
                 MinTorque = 7.5f,
                 MaxTorque = 11.0f
             });
@@ -157,8 +173,6 @@ namespace HMI_ScrewingMonitor.ViewModels
                 DeviceName = "Máy vặn vít #4",
                 IPAddress = "192.168.1.103", 
                 Port = 502,
-                MinAngle = 40.0f,
-                MaxAngle = 50.0f,
                 MinTorque = 8.0f,
                 MaxTorque = 12.0f
             });
@@ -175,11 +189,32 @@ namespace HMI_ScrewingMonitor.ViewModels
                 if (device.DeviceId <= 2)
                 {
                     device.IsConnected = true;
-                    device.Status = device.DeviceId == 1 ? "Siết OK" : "Siết NG";
-                    device.IsOK = device.DeviceId == 1;
-                    device.ActualAngle = (float)(device.MinAngle + random.NextDouble() * (device.MaxAngle - device.MinAngle));
-                    device.ActualTorque = (float)(device.MinTorque + random.NextDouble() * (device.MaxTorque - device.MinTorque));
-                    device.LastUpdate = DateTime.Now.AddSeconds(-random.Next(1, 30));
+                    // Simulate realistic torque values around target
+                    float targetTorque = device.TargetTorque;
+                    float variation = (device.MaxTorque - device.MinTorque) * 0.2f;
+                    device.ActualTorque = (float)(targetTorque + (random.NextDouble() - 0.5) * variation);
+
+                    // Ensure within bounds
+                    device.ActualTorque = Math.Max(device.MinTorque, Math.Min(device.MaxTorque, device.ActualTorque));
+
+                    // Update statistics occasionally
+                    if (random.NextDouble() < 0.1) // 10% chance
+                    {
+                        if (device.ActualTorque >= device.MinTorque && device.ActualTorque <= device.MaxTorque)
+                        {
+                            device.OKDeviceCount++;
+                            device.TotalCount++;
+                        }
+                        else
+                        {
+                            device.NGDeviceCount++;
+                            device.TotalCount++;
+                        }
+                    }
+
+                    device.Status = device.DeviceId <= 2 ? "Siết OK" : "Siết NG";
+                    device.IsOK = device.DeviceId <= 2;
+                    device.LastUpdate = DateTime.Now;
                 }
                 else
                 {
@@ -198,16 +233,21 @@ namespace HMI_ScrewingMonitor.ViewModels
         {
             try
             {
-                // Load connection settings from config
-                var config = LoadModbusConfig();
+                // Use cached connection settings
+                _modbusSettings = LoadModbusConfig();
                 bool connected = false;
 
-                switch (config.ConnectionType)
+                switch (_modbusSettings.ConnectionType)
                 {
                     case "TCP_Individual":
                         // Kết nối tất cả thiết bị song song
                         var enabledDevices = Devices.Where(d => d.Enabled).ToList();
                         var totalDevices = enabledDevices.Count;
+                        Console.WriteLine($"[CONNECT] Found {enabledDevices.Count} enabled devices out of {Devices.Count} total devices");
+                        foreach (var dev in enabledDevices)
+                        {
+                            Console.WriteLine($"[CONNECT] Will connect to Device {dev.DeviceId}: {dev.DeviceName} at {dev.IPAddress}:{dev.Port}");
+                        }
 
                         // Update UI with progress
                         ConnectionStatus = $"Đang kết nối 0/{totalDevices} thiết bị...";
@@ -224,12 +264,6 @@ namespace HMI_ScrewingMonitor.ViewModels
                                 device.IsConnected = true;
                                 device.Status = "Sẵn sàng";
 
-                                // Update progress
-                                var connectedCount = Devices.Count(d => d.IsConnected);
-                                ConnectionStatus = $"Đang kết nối {connectedCount}/{totalDevices} thiết bị...";
-                                OnPropertyChanged(nameof(ConnectionStatus));
-                                OnPropertyChanged(nameof(ConnectedDevicesCount));
-
                                 return true;
                             }
                             else
@@ -240,17 +274,27 @@ namespace HMI_ScrewingMonitor.ViewModels
                             }
                         }).ToList();
 
+                        // Cập nhật trạng thái UI trong khi chờ kết nối
+                        while (connectionTasks.Any(t => !t.IsCompleted))
+                        {
+                            var connectedCount = Devices.Count(d => d.IsConnected);
+                            ConnectionStatus = $"Đang kết nối {connectedCount}/{totalDevices} thiết bị...";
+                            OnPropertyChanged(nameof(ConnectionStatus));
+                            OnPropertyChanged(nameof(ConnectedDevicesCount));
+                            await Task.Delay(100); // Chờ một chút trước khi cập nhật lại
+                        }
+
                         // Wait for all connections to complete
                         var results = await Task.WhenAll(connectionTasks);
-                        var connectedDevices = results.Count(r => r);
-                        connected = connectedDevices > 0;
+                        var finalConnectedCount = results.Count(r => r);
+                        connected = finalConnectedCount > 0;
                         break;
 
                     case "TCP_Gateway":
-                        connected = await _modbusService.ConnectTCP_Gateway(config.GatewayIP, config.GatewayPort);
+                        connected = await _modbusService.ConnectTCP_Gateway(_modbusSettings.GatewayIP, _modbusSettings.GatewayPort);
                         if (connected)
                         {
-                            foreach (var device in Devices)
+                            foreach (var device in Devices.Where(d => d.Enabled))
                             {
                                 device.IsConnected = true;
                                 device.Status = "Sẵn sàng";
@@ -259,10 +303,10 @@ namespace HMI_ScrewingMonitor.ViewModels
                         break;
 
                     case "RTU_Serial":
-                        connected = _modbusService.ConnectRTU(config.SerialPort, config.BaudRate);
+                        connected = _modbusService.ConnectRTU(_modbusSettings.SerialPort, _modbusSettings.BaudRate);
                         if (connected)
                         {
-                            foreach (var device in Devices)
+                            foreach (var device in Devices.Where(d => d.Enabled))
                             {
                                 device.IsConnected = true;
                                 device.Status = "Sẵn sàng";
@@ -271,48 +315,17 @@ namespace HMI_ScrewingMonitor.ViewModels
                         break;
 
                     default:
-                        // Fallback to TCP_Individual với kết nối song song
-                        var fallbackEnabledDevices = Devices.Where(d => d.Enabled).ToList();
-                        var fallbackTotalDevices = fallbackEnabledDevices.Count;
-
-                        ConnectionStatus = $"Đang kết nối 0/{fallbackTotalDevices} thiết bị (fallback)...";
-
-                        var fallbackConnectionTasks = fallbackEnabledDevices.Select(async device =>
-                        {
-                            device.Status = "Đang kết nối...";
-                            var deviceConnected = await _modbusService.ConnectToDevice(device);
-                            if (deviceConnected)
-                            {
-                                device.IsConnected = true;
-                                device.Status = "Sẵn sàng";
-
-                                var connectedCount = Devices.Count(d => d.IsConnected);
-                                ConnectionStatus = $"Đang kết nối {connectedCount}/{fallbackTotalDevices} thiết bị (fallback)...";
-                                OnPropertyChanged(nameof(ConnectionStatus));
-                                OnPropertyChanged(nameof(ConnectedDevicesCount));
-
-                                return true;
-                            }
-                            else
-                            {
-                                device.IsConnected = false;
-                                device.Status = "Kết nối thất bại";
-                                return false;
-                            }
-                        }).ToList();
-
-                        var fallbackResults = await Task.WhenAll(fallbackConnectionTasks);
-                        var fallbackConnectedDevices = fallbackResults.Count(r => r);
-                        connected = fallbackConnectedDevices > 0;
+                        ConnectionStatus = "Lỗi: Loại kết nối không xác định.";
+                        connected = false;
                         break;
                 }
 
                 // Kiểm tra số thiết bị kết nối thành công
-                int connectedCount = Devices.Count(d => d.IsConnected);
+                int connectedCountAfterAll = Devices.Count(d => d.IsConnected);
 
-                if (connectedCount > 0)
+                if (connectedCountAfterAll > 0)
                 {
-                    ConnectionStatus = $"Đã kết nối {connectedCount}/{TotalDevices} thiết bị ({config.ConnectionType})";
+                    ConnectionStatus = $"Đã kết nối {connectedCountAfterAll}/{TotalDevices} thiết bị ({_modbusSettings.ConnectionType})";
                     // Auto-start monitoring nếu có ít nhất 1 thiết bị kết nối
                     StartMonitoring();
                 }
@@ -361,11 +374,18 @@ namespace HMI_ScrewingMonitor.ViewModels
                 _modbusService.DisconnectFromDevice(device.DeviceId);
                 device.IsConnected = false;
                 device.Status = "--";
-                device.ActualAngle = 0;
                 device.ActualTorque = 0;
                 device.IsOK = false;
+                // Xóa cả dữ liệu thống kê
+                device.TotalCount = 0;
+                device.OKDeviceCount = 0;
+                device.NGDeviceCount = 0;
+
                 device.LastSuccessfulRead = DateTime.MinValue;  // Reset health tracking
             }
+
+            // Ngắt kết nối chung (cho Gateway)
+            _modbusService.Disconnect();
 
             ConnectionStatus = "Đã ngắt kết nối";
             UpdateButtonStates();
@@ -378,6 +398,13 @@ namespace HMI_ScrewingMonitor.ViewModels
             if (ConnectedDevicesCount > 0)
             {
                 IsMonitoring = true;
+
+                // Đảm bảo timer được cấu hình và đăng ký sự kiện đúng cách MỖI KHI bắt đầu.
+                // Điều này tránh các lỗi do cấu hình lại ở nơi khác.
+                _timer.Stop(); // Dừng timer cũ nếu đang chạy
+                _timer.Interval = _modbusSettings.ScanInterval > 0 ? TimeSpan.FromMilliseconds(_modbusSettings.ScanInterval) : TimeSpan.FromSeconds(1);
+                _timer.Tick -= Timer_Tick; // Hủy đăng ký cũ để tránh gọi nhiều lần
+                _timer.Tick += Timer_Tick; // Đăng ký mới
                 _timer.Start();
                 UpdateButtonStates();
                 Console.WriteLine($"*** MONITORING STARTED - {ConnectedDevicesCount} devices connected ***");
@@ -396,7 +423,6 @@ namespace HMI_ScrewingMonitor.ViewModels
             // Xóa dữ liệu các thiết bị khi dừng giám sát để phân biệt trạng thái
             foreach (var device in Devices)
             {
-                device.ActualAngle = 0;
                 device.ActualTorque = 0;
                 device.Status = device.IsConnected ? "Sẵn sàng" : "--";
                 device.IsOK = false;
@@ -418,6 +444,12 @@ namespace HMI_ScrewingMonitor.ViewModels
 
             // Reload devices after settings window closes
             LoadDevicesFromConfig();
+
+            // Reload modbus settings as they might have changed
+            _modbusSettings = LoadModbusConfig();
+            _timer.Interval = _modbusSettings.ScanInterval > 0 
+                ? TimeSpan.FromMilliseconds(_modbusSettings.ScanInterval) 
+                : TimeSpan.FromSeconds(1);
         }
 
         private void LoadDevicesFromConfig()
@@ -439,21 +471,24 @@ namespace HMI_ScrewingMonitor.ViewModels
                             {
                                 DeviceId = deviceConfig.DeviceId,
                                 DeviceName = deviceConfig.DeviceName,
+                                DeviceModel = deviceConfig.DeviceModel,
                                 IPAddress = deviceConfig.IPAddress,
                                 Port = deviceConfig.Port,
                                 SlaveId = deviceConfig.SlaveId,
-                                MinAngle = (float)deviceConfig.MinAngle,
-                                MaxAngle = (float)deviceConfig.MaxAngle,
                                 MinTorque = (float)deviceConfig.MinTorque,
                                 MaxTorque = (float)deviceConfig.MaxTorque,
+                                TargetTorque = (float)deviceConfig.TargetTorque,
+                                TotalCount = deviceConfig.TotalCount,
+                                OKDeviceCount = deviceConfig.OKCount,
+                                NGDeviceCount = deviceConfig.NGCount,
                                 Enabled = deviceConfig.Enabled,  // Set enabled status from config
                                 // Trạng thái ban đầu
                                 IsConnected = false,
                                 Status = "--",
                                 IsOK = false,
-                                ActualAngle = 0,
                                 ActualTorque = 0
                             };
+                            Console.WriteLine($"[CONFIG] Loaded Device {device.DeviceId}: {device.DeviceName}, Enabled={device.Enabled}, IP={device.IPAddress}");
                             Devices.Add(device);
                         }
 
@@ -496,49 +531,127 @@ namespace HMI_ScrewingMonitor.ViewModels
 
             Console.WriteLine($"*** TIMER_TICK - IsMonitoring = {IsMonitoring}, ConnectedDevices = {ConnectedDevicesCount} ***");
 
-            var config = LoadModbusConfig();
-
             // Chỉ xử lý các thiết bị được kích hoạt
             foreach (var device in Devices.Where(d => d.Enabled).ToList())
             {
+                // Chỉ đọc dữ liệu từ các thiết bị đang có kết nối
+                if (!device.IsConnected)
+                {
+                    // Thử kết nối lại nếu thiết bị đang offline
+                    bool reconnected = await _modbusService.ConnectToDevice(device);
+                    // Nếu kết nối lại thất bại, bỏ qua thiết bị này trong chu kỳ hiện tại
+                    if (!reconnected)
+                    {
+                        continue;
+                    }
+                }
+
                 try
                 {
-                    ScrewingDevice updatedDevice = null;
-
-                    switch (config.ConnectionType)
+                    DeviceReadEvent eventResult = null;
+                    switch (_modbusSettings.ConnectionType)
                     {
                         case "TCP_Individual":
-                            updatedDevice = await _modbusService.ReadDeviceData_Individual(device);
+                            eventResult = await _modbusService.ReadDeviceEvent_Individual(device);
                             break;
 
                         case "TCP_Gateway":
-                            updatedDevice = await _modbusService.ReadDeviceData_Gateway(device);
+                            eventResult = await _modbusService.ReadDeviceEvent_Gateway(device);
                             break;
 
                         case "RTU_Serial":
-                            updatedDevice = await _modbusService.ReadDeviceData_RTU(device);
+                            // Phương thức RTU chưa được triển khai, tạm thời gán null
+                            // và thay thế readResult bằng eventResult cho đúng.
+                            eventResult = null; // await _modbusService.ReadDeviceEvent_RTU(device);
                             break;
 
                         default:
-                            updatedDevice = await _modbusService.ReadDeviceData_Individual(device);
+                            eventResult = await _modbusService.ReadDeviceEvent_Individual(device);
                             break;
                     }
 
-                    if (updatedDevice != null)
+                    if (eventResult != null && eventResult.Success)
                     {
-                        // Cập nhật dữ liệu
-                        device.ActualAngle = updatedDevice.ActualAngle;
-                        device.ActualTorque = updatedDevice.ActualTorque;
-                        device.IsOK = updatedDevice.IsOK;
-                        device.Status = updatedDevice.Status;
-                        device.LastUpdate = updatedDevice.LastUpdate;
-                        device.LastSuccessfulRead = updatedDevice.LastSuccessfulRead;
-                        device.IsConnected = updatedDevice.IsConnected;
+                        // Nếu đây là một sự kiện hoàn thành (COMP vừa bật ON)
+                        if (eventResult.IsCompletionEvent)
+                        {
+                            // Validation: Tránh duplicate events trong 1 giây
+                            var now = DateTime.Now;
+                            if (device.LastUpdate != DateTime.MinValue &&
+                                (now - device.LastUpdate).TotalSeconds < 1.0)
+                            {
+                                Console.WriteLine($"[SKIP] Device {device.DeviceId} - Duplicate completion event detected within 1 second");
+                                return; // Skip duplicate event
+                            }
+
+                            Console.WriteLine($"[EVENT] Device {device.DeviceId} - Processing NEW completion event");
+
+                            // Cập nhật tất cả dữ liệu từ sự kiện
+                            device.IsConnected = true;
+                            device.LastSuccessfulRead = now;
+                            device.ActualTorque = eventResult.ActualTorque;
+                            device.IsOK = eventResult.IsOK;
+                            device.Status = eventResult.StatusMessage;
+                            // Cập nhật TotalCount: ưu tiên từ thiết bị, nếu không có thì tự tăng
+                            if (eventResult.TotalCount > 0)
+                                device.TotalCount = eventResult.TotalCount;
+                            else
+                                device.TotalCount++; // Tự động tăng nếu thiết bị không cung cấp
+
+                            // Cập nhật các giá trị cài đặt từ thiết bị (nếu có)
+                            if (eventResult.TargetTorque > 0)
+                                device.TargetTorque = eventResult.TargetTorque;
+                            if (eventResult.MinTorque > 0)
+                                device.MinTorque = eventResult.MinTorque;
+                            if (eventResult.MaxTorque > 0)
+                                device.MaxTorque = eventResult.MaxTorque;
+
+                            device.LastUpdate = now;
+
+                            // Cập nhật bộ đếm OK/NG cho chính thiết bị đó
+                            if (eventResult.IsOK)
+                            {
+                                device.OKDeviceCount++;
+                                Console.WriteLine($"[COUNTER] Device {device.DeviceId} - OK Count: {device.OKDeviceCount}");
+                            }
+                            else
+                            {
+                                device.NGDeviceCount++;
+                                Console.WriteLine($"[COUNTER] Device {device.DeviceId} - NG Count: {device.NGDeviceCount}");
+                            }
+
+                            Console.WriteLine($"[COUNTER] Device {device.DeviceId} - Total Count: {device.TotalCount}");
+
+                            // Ghi log completion event
+                            Console.WriteLine($"[LOGGING] Device {device.DeviceId} - Writing completion event to log");
+                            _loggingService.LogScrewingEvent(device);
+
+                            // Cập nhật bộ đếm trong ngày
+                            if (DateTime.Today != _currentDate)
+                            {
+                                _currentDate = DateTime.Today;
+                                DailyOKCount = 0;
+                                DailyNGCount = 0;
+                            }
+                            if (device.IsOK)
+                                DailyOKCount++;
+                            else
+                                DailyNGCount++;
+
+                            Console.WriteLine($"[DAILY] Daily counts - OK: {DailyOKCount}, NG: {DailyNGCount}");
+                        }
+
+                        // Luôn cập nhật trạng thái COMP trước đó cho lần kiểm tra tiếp theo
+                        device.PreviousCompletionState = eventResult.CurrentCompletionState;
                     }
                     else
                     {
-                        // Giữ nguyên trạng thái kết nối, chỉ báo lỗi đọc dữ liệu
-                        device.Status = "Lỗi đọc dữ liệu";
+                        // Handle read failure
+                        Console.WriteLine($"[ERROR] Device {device.DeviceId}: Read failed - Success={eventResult?.Success}, Status={eventResult?.StatusMessage}");
+                        device.IsConnected = false; // Set to false on any read error
+                        device.Status = eventResult?.StatusMessage ?? "Lỗi đọc dữ liệu";
+                        device.ActualTorque = 0;
+                        device.IsOK = false;
                         device.LastUpdate = DateTime.Now;
                     }
                 }
@@ -547,8 +660,7 @@ namespace HMI_ScrewingMonitor.ViewModels
                     device.IsConnected = false;
                     device.Status = "--";
                     // Xóa dữ liệu cũ khi có lỗi
-                    device.ActualAngle = 0;
-                    device.ActualTorque = 0;
+                        device.ActualTorque = 0;
                     device.IsOK = false;
                     device.LastUpdate = DateTime.Now;
                     Console.WriteLine($"TIMER ERROR - Device {device.DeviceId}: {ex.Message}");
@@ -561,14 +673,13 @@ namespace HMI_ScrewingMonitor.ViewModels
             OnPropertyChanged(nameof(NGCount));
 
             // Cập nhật ConnectionStatus realtime
-            if (ConnectedDevicesCount == 0)
+            if (ConnectedDevicesCount == 0 && TotalDevices > 0)
             {
                 ConnectionStatus = "Tất cả thiết bị đã mất kết nối";
             }
-            else
+            else if (TotalDevices > 0)
             {
-                var currentConfig = LoadModbusConfig();
-                ConnectionStatus = $"Đã kết nối {ConnectedDevicesCount}/{TotalDevices} thiết bị ({currentConfig.ConnectionType})";
+                ConnectionStatus = $"Đã kết nối {ConnectedDevicesCount}/{TotalDevices} thiết bị ({_modbusSettings.ConnectionType})";
             }
         }
 
@@ -578,7 +689,6 @@ namespace HMI_ScrewingMonitor.ViewModels
             OnPropertyChanged(nameof(CanDisconnect));
             OnPropertyChanged(nameof(CanStartMonitoring));
             OnPropertyChanged(nameof(CanStopMonitoring));
-            OnPropertyChanged(nameof(ConnectionProgress));
             OnPropertyChanged(nameof(ConnectedDevicesCount));
         }
 

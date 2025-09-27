@@ -5,6 +5,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:vm="clr-namespace:HMI_ScrewingMonitor.ViewModels"
+        xmlns:controls="clr-namespace:HMI_ScrewingMonitor.Controls"
         mc:Ignorable="d"
         d:DataContext="{d:DesignInstance Type=vm:MainViewModel, IsDesignTimeCreatable=True}"
         Title="HMI - Giám sát thiết bị vặn vít tự động"
@@ -16,6 +17,9 @@
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="/Resources/ColorTheme.xaml"/>
             </ResourceDictionary.MergedDictionaries>
+
+            <!-- Converters -->
+            <controls:TorqueHistoryConverter x:Key="TorqueHistoryConverter"/>
 
             <!-- Updated Styles with new color scheme -->
             <Style x:Key="HeaderStyle" TargetType="TextBlock">
@@ -160,20 +164,32 @@
                             <Border.Effect>
                                 <DropShadowEffect ShadowDepth="3" Color="Gray" Opacity="0.3"/>
                             </Border.Effect>
-                            
+
                             <Grid Margin="10">
                                 <Grid.RowDefinitions>
                                     <RowDefinition Height="40"/>
                                     <RowDefinition Height="60"/>
+                                    <RowDefinition Height="80"/>
+                                    <RowDefinition Height="40"/>
                                     <RowDefinition Height="*"/>
+                                    <RowDefinition Height="30"/>
                                 </Grid.RowDefinitions>
-                                
+
                                 <!-- Device Header -->
                                 <Border Grid.Row="0" Background="{StaticResource PrimaryBackground}" CornerRadius="5">
-                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                                        <TextBlock Text="{Binding DeviceName}"
-                                                 Style="{StaticResource HeaderStyle}"/>
-                                        <Ellipse Width="15" Height="15" Margin="10,0">
+                                    <Grid Margin="10,0">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+
+                                        <TextBlock Grid.Column="0" Text="{Binding DeviceName}"
+                                                 Style="{StaticResource HeaderStyle}"
+                                                 HorizontalAlignment="Left" VerticalAlignment="Center"/>
+
+                                        <Ellipse Grid.Column="1" Width="15" Height="15" Margin="5,0">
                                             <Ellipse.Style>
                                                 <Style TargetType="Ellipse">
                                                     <Style.Triggers>
@@ -187,112 +203,159 @@
                                                 </Style>
                                             </Ellipse.Style>
                                         </Ellipse>
-                                        <!-- Status Text Indicator -->
-                                        <TextBlock Text="{Binding DeviceStatusText}"
-                                                 Margin="10,0" FontSize="10" FontWeight="Bold"
-                                                 Foreground="{Binding StatusTextColor}"/>
-                                    </StackPanel>
+
+                                        <Border Grid.Column="2" Background="White" CornerRadius="3"
+                                               Padding="8,2" Margin="5,0">
+                                            <TextBlock Text="{Binding DeviceStatusText}"
+                                                     FontSize="10" FontWeight="Bold"
+                                                     Foreground="Black"/>
+                                        </Border>
+
+                                        <Border Grid.Column="3" Background="White" CornerRadius="3"
+                                               Padding="8,2" Margin="5,0">
+                                            <TextBlock Text="{Binding DeviceModel}"
+                                                     FontSize="10" FontWeight="Bold"
+                                                     Foreground="Black"/>
+                                        </Border>
+                                    </Grid>
                                 </Border>
-                                
-                                <!-- Status -->
+
+                                <!-- Status Section -->
                                 <Border Grid.Row="1" Margin="0,5" CornerRadius="5"
                                        Background="{Binding ResultBackgroundColor}">
-                                    <StackPanel>
-                                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,5">
-                                            <!-- Status Icon -->
-                                            <TextBlock FontSize="20" Margin="0,0,5,0">
-                                                <TextBlock.Style>
-                                                    <Style TargetType="TextBlock">
-                                                        <Style.Triggers>
-                                                            <DataTrigger Binding="{Binding ResultText}" Value="OK">
-                                                                <Setter Property="Text" Value="✓"/>
-                                                                <Setter Property="Foreground" Value="{StaticResource WhiteTextColor}"/>
-                                                            </DataTrigger>
-                                                            <DataTrigger Binding="{Binding ResultText}" Value="NG">
-                                                                <Setter Property="Text" Value="✗"/>
-                                                                <Setter Property="Foreground" Value="{StaticResource WhiteTextColor}"/>
-                                                            </DataTrigger>
-                                                            <DataTrigger Binding="{Binding ResultText}" Value="--">
-                                                                <Setter Property="Text" Value="⚠"/>
-                                                                <Setter Property="Foreground" Value="{StaticResource SecondaryTextColor}"/>
-                                                            </DataTrigger>
-                                                        </Style.Triggers>
-                                                    </Style>
-                                                </TextBlock.Style>
-                                            </TextBlock>
-                                            <TextBlock Text="{Binding ResultText}"
-                                                     Style="{StaticResource StatusTextStyle}"/>
-                                        </StackPanel>
-                                        <TextBlock Text="{Binding Status}"
-                                                 Foreground="{Binding StatusTextColor}"
-                                                 FontSize="12" HorizontalAlignment="Center"/>
+                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                        <TextBlock FontSize="24" Margin="0,0,10,0">
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock">
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding ResultText}" Value="OK">
+                                                            <Setter Property="Text" Value="✓"/>
+                                                            <Setter Property="Foreground" Value="{StaticResource WhiteTextColor}"/>
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding ResultText}" Value="NG">
+                                                            <Setter Property="Text" Value="✗"/>
+                                                            <Setter Property="Foreground" Value="{StaticResource WhiteTextColor}"/>
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding ResultText}" Value="--">
+                                                            <Setter Property="Text" Value="⚠"/>
+                                                            <Setter Property="Foreground" Value="{StaticResource SecondaryTextColor}"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
+                                        <TextBlock Text="{Binding ResultText}"
+                                                 Style="{StaticResource StatusTextStyle}"/>
                                     </StackPanel>
                                 </Border>
-                                
-                                <!-- Parameters -->
-                                <Grid Grid.Row="2">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="*"/>
-                                    </Grid.ColumnDefinitions>
-                                    <Grid.RowDefinitions>
-                                        <RowDefinition Height="Auto"/>
-                                        <RowDefinition Height="50"/>
-                                        <RowDefinition Height="Auto"/>
-                                        <RowDefinition Height="50"/>
-                                        <RowDefinition Height="Auto"/>
-                                    </Grid.RowDefinitions>
-                                    
-                                    <!-- Angle -->
-                                    <TextBlock Grid.Row="0" Grid.Column="0" Text="Góc siết (°)" 
-                                             FontWeight="Bold" HorizontalAlignment="Center"/>
-                                    <Border Grid.Row="1" Grid.Column="0"
-                                           BorderBrush="{StaticResource AngleBorderColor}"
-                                           BorderThickness="2"
-                                           Background="{StaticResource AngleBackgroundColor}"
-                                           Margin="2" CornerRadius="3">
-                                        <StackPanel VerticalAlignment="Center">
-                                            <TextBlock Text="{Binding ActualAngle, StringFormat='{}{0:F1}°'}" 
-                                                     Style="{StaticResource ValueTextStyle}" FontSize="20"/>
-                                            <TextBlock Text="Thực tế" FontSize="10" HorizontalAlignment="Center"/>
-                                        </StackPanel>
-                                    </Border>
-                                    
-                                    <TextBlock Grid.Row="2" Grid.Column="0" 
-                                             Text="{Binding MinAngle, StringFormat='Min: {0:F1}°'}" 
-                                             FontSize="10" HorizontalAlignment="Center"/>
-                                    <TextBlock Grid.Row="3" Grid.Column="0" 
-                                             Text="{Binding MaxAngle, StringFormat='Max: {0:F1}°'}" 
-                                             FontSize="10" HorizontalAlignment="Center"/>
-                                    
-                                    <!-- Torque -->
-                                    <TextBlock Grid.Row="0" Grid.Column="1" Text="Lực siết (Nm)" 
-                                             FontWeight="Bold" HorizontalAlignment="Center"/>
-                                    <Border Grid.Row="1" Grid.Column="1"
-                                           BorderBrush="{StaticResource TorqueBorderColor}"
-                                           BorderThickness="2"
-                                           Background="{StaticResource TorqueBackgroundColor}"
-                                           Margin="2" CornerRadius="3">
-                                        <StackPanel VerticalAlignment="Center">
-                                            <TextBlock Text="{Binding ActualTorque, StringFormat='{}{0:F2} Nm'}" 
-                                                     Style="{StaticResource ValueTextStyle}" FontSize="20"/>
-                                            <TextBlock Text="Thực tế" FontSize="10" HorizontalAlignment="Center"/>
-                                        </StackPanel>
-                                    </Border>
-                                    
-                                    <TextBlock Grid.Row="2" Grid.Column="1" 
-                                             Text="{Binding MinTorque, StringFormat='Min: {0:F2} Nm'}" 
-                                             FontSize="10" HorizontalAlignment="Center"/>
-                                    <TextBlock Grid.Row="3" Grid.Column="1" 
-                                             Text="{Binding MaxTorque, StringFormat='Max: {0:F2} Nm'}" 
-                                             FontSize="10" HorizontalAlignment="Center"/>
-                                    
-                                    <!-- Last Update -->
-                                    <TextBlock Grid.Row="4" Grid.ColumnSpan="2" 
-                                             Text="{Binding LastUpdate, StringFormat='Cập nhật: {0:HH:mm:ss}'}" 
-                                             FontSize="10" HorizontalAlignment="Center" 
-                                             Foreground="Gray" Margin="0,5"/>
-                                </Grid>
+
+                                <!-- Measurement Grid -->
+                                <Border Grid.Row="2" BorderBrush="Black" BorderThickness="2"
+                                       Background="White" Margin="0,5">
+                                    <Grid>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="25"/>
+                                            <RowDefinition Height="*"/>
+                                        </Grid.RowDefinitions>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+
+                                        <!-- Headers -->
+                                        <TextBlock Grid.Row="0" Grid.Column="0" Text="Tiêu chuẩn Nm"
+                                                 FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                 FontSize="12"/>
+                                        <TextBlock Grid.Row="0" Grid.Column="1" Text="Lực đặt Nm"
+                                                 FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                 FontSize="12"/>
+                                        <TextBlock Grid.Row="0" Grid.Column="2" Text="Thực tế Nm"
+                                                 FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                 FontSize="12"/>
+
+                                        <!-- Values -->
+                                        <Border Grid.Row="1" Grid.Column="0" BorderBrush="Black" BorderThickness="1"
+                                               Margin="2">
+                                            <TextBlock Text="{Binding StandardRange}"
+                                                     HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                     FontSize="14" FontWeight="Bold"/>
+                                        </Border>
+
+                                        <Border Grid.Row="1" Grid.Column="1" BorderBrush="Black" BorderThickness="1"
+                                               Margin="2">
+                                            <TextBlock Text="{Binding TargetTorque, StringFormat='{}{0:F1}'}"
+                                                     HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                     FontSize="14" FontWeight="Bold"/>
+                                        </Border>
+
+                                        <Border Grid.Row="1" Grid.Column="2" BorderBrush="Black" BorderThickness="1"
+                                               Margin="2">
+                                            <TextBlock Text="{Binding ActualTorque, StringFormat='{}{0:F1}'}"
+                                                     HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                     FontSize="14" FontWeight="Bold"/>
+                                        </Border>
+                                    </Grid>
+                                </Border>
+
+                                <!-- Statistics Row -->
+                                <Border Grid.Row="3" Background="White" BorderBrush="Black" BorderThickness="2"
+                                       Margin="0,5">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+
+                                        <TextBlock Grid.Column="0" Text="{Binding TotalCount, StringFormat='Tổng: {0}'}"
+                                                 HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                 FontSize="12" FontWeight="Bold"/>
+
+                                        <TextBlock Grid.Column="1" Text="{Binding OKDeviceCount, StringFormat='OK: {0}'}"
+                                                 HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                 FontSize="12" FontWeight="Bold" Foreground="Blue"/>
+
+                                        <TextBlock Grid.Column="2" Text="{Binding NGDeviceCount, StringFormat='NG: {0}'}"
+                                                 HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                 FontSize="12" FontWeight="Bold" Foreground="Red"/>
+                                    </Grid>
+                                </Border>
+
+                                <!-- Chart Section -->
+                                <Border Grid.Row="4" Background="White" BorderBrush="Black" BorderThickness="2"
+                                       Margin="0,5">
+                                    <Grid>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="20"/>
+                                            <RowDefinition Height="120"/>
+                                            <RowDefinition Height="20"/>
+                                        </Grid.RowDefinitions>
+
+                                        <!-- Max label -->
+                                        <TextBlock Grid.Row="0" Text="{Binding MaxTorque, StringFormat='Max({0:F1} Nm)'}"
+                                                 HorizontalAlignment="Right" VerticalAlignment="Center"
+                                                 FontSize="10" Margin="0,0,10,0"/>
+
+                                        <!-- Real-time Torque Chart -->
+                                        <controls:TorqueChart Grid.Row="1" Background="White" Margin="10"
+                                                            TorqueHistory="{Binding TorqueHistory}"
+                                                            MinTorque="{Binding MinTorque}"
+                                                            MaxTorque="{Binding MaxTorque}"/>
+
+                                        <!-- Min label -->
+                                        <TextBlock Grid.Row="2" Text="{Binding MinTorque, StringFormat='Min({0:F1} Nm)'}"
+                                                 HorizontalAlignment="Right" VerticalAlignment="Center"
+                                                 FontSize="10" Margin="0,0,10,0"/>
+                                    </Grid>
+                                </Border>
+
+                                <!-- Footer with Date -->
+                                <Border Grid.Row="5" Margin="0,5,0,0">
+                                    <TextBlock Text="{Binding LastUpdate, StringFormat='dd.MM.yyyy'}"
+                                             FontSize="14" FontWeight="Bold"
+                                             HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                                </Border>
                             </Grid>
                         </Border>
                     </DataTemplate>
@@ -320,6 +383,23 @@
             <StatusBarItem>
                 <TextBlock Text="{Binding NGCount, StringFormat='NG: {0}'}"
                           FontWeight="Bold" Foreground="{StaticResource ErrorColor}"/>
+            </StatusBarItem>
+            <Separator/>
+            <StatusBarItem>
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Margin="10,0,5,0" FontWeight="Bold" Foreground="{StaticResource WhiteTextColor}">
+                        <Run Text="Tổng hôm nay:"/>
+                    </TextBlock>
+                    <TextBlock Foreground="{StaticResource SuccessColor}" FontWeight="Bold">
+                        <Run Text="{Binding DailyOKCount}"/>
+                        <Run Text=" OK"/>
+                    </TextBlock>
+                    <TextBlock Text="/" Margin="5,0" FontWeight="Bold" Foreground="{StaticResource WhiteTextColor}"/>
+                    <TextBlock Foreground="{StaticResource ErrorColor}" FontWeight="Bold">
+                        <Run Text="{Binding DailyNGCount}"/>
+                        <Run Text=" NG"/>
+                    </TextBlock>
+                </StackPanel>
             </StatusBarItem>
             <Separator/>
             <StatusBarItem HorizontalAlignment="Right">

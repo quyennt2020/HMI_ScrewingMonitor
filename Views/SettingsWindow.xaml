@@ -58,12 +58,13 @@
                                      CanUserAddRows="False" CanUserDeleteRows="False"
                                      ItemsSource="{Binding Devices}" SelectedItem="{Binding SelectedDevice}">
                                 <DataGrid.Columns>
-                                    <DataGridTextColumn Header="ID" Binding="{Binding DeviceId}" Width="50"/>
-                                    <DataGridTextColumn Header="Tên Thiết bị" Binding="{Binding DeviceName}" Width="150"/>
-                                    <DataGridTextColumn Header="IP Address" Binding="{Binding IPAddress}" Width="120"/>
-                                    <DataGridTextColumn Header="Port" Binding="{Binding Port}" Width="60"/>
-                                    <DataGridTextColumn Header="Slave ID" Binding="{Binding SlaveId}" Width="70"/>
-                                    <DataGridCheckBoxColumn Header="Kích hoạt" Binding="{Binding Enabled}" Width="80"/>
+                                    <DataGridTextColumn Header="ID" Binding="{Binding DeviceId}" Width="40"/>
+                                    <DataGridTextColumn Header="Tên Thiết bị" Binding="{Binding DeviceName}" Width="130"/>
+                                    <DataGridTextColumn Header="Mô hình" Binding="{Binding DeviceModel}" Width="60"/>
+                                    <DataGridTextColumn Header="IP Address" Binding="{Binding IPAddress}" Width="100"/>
+                                    <DataGridTextColumn Header="Port" Binding="{Binding Port}" Width="50"/>
+                                    <DataGridTextColumn Header="Slave ID" Binding="{Binding SlaveId}" Width="60"/>
+                                    <DataGridCheckBoxColumn Header="Kích hoạt" Binding="{Binding Enabled}" Width="70"/>
                                 </DataGrid.Columns>
                             </DataGrid>
 
@@ -96,98 +97,70 @@
                             <Label Content="Slave ID:"/>
                             <TextBox Text="{Binding SlaveId}" Margin="0,0,0,10"/>
 
+                            <Label Content="Mô hình thiết bị:"/>
+                            <TextBox Text="{Binding DeviceModel}" Margin="0,0,0,10"/>
+
                             <CheckBox Content="Kích hoạt thiết bị" IsChecked="{Binding Enabled}" Margin="0,10"/>
 
                             <Separator Margin="0,10"/>
-
-                            <Label Content="Góc siết Min (°):"/>
-                            <TextBox Text="{Binding MinAngle}" Margin="0,0,0,10"/>
-
-                            <Label Content="Góc siết Max (°):"/>
-                            <TextBox Text="{Binding MaxAngle}" Margin="0,0,0,10"/>
 
                             <Label Content="Lực siết Min (Nm):"/>
                             <TextBox Text="{Binding MinTorque}" Margin="0,0,0,10"/>
 
                             <Label Content="Lực siết Max (Nm):"/>
                             <TextBox Text="{Binding MaxTorque}" Margin="0,0,0,10"/>
+
+                            <Label Content="Lực đạt (Nm):"/>
+                            <TextBox Text="{Binding TargetTorque}" Margin="0,0,0,10"/>
+
+                            <Separator Margin="0,10"/>
+
+                            <Label Content="Tổng số lần xiết:"/>
+                            <TextBox Text="{Binding TotalCount}" Margin="0,0,0,10"/>
+
+                            <Label Content="Số lần OK:"/>
+                            <TextBox Text="{Binding OKCount}" Margin="0,0,0,10"/>
+
+                            <Label Content="Số lần NG:"/>
+                            <TextBox Text="{Binding NGCount}" Margin="0,0,0,10"/>
                         </StackPanel>
                     </GroupBox>
                 </Grid>
             </TabItem>
 
             <!-- Tab 2: Cấu hình Modbus -->
-            <TabItem Header="🔧 Cấu hình Modbus" Style="{StaticResource TabItemStyle}">
-                <Grid Margin="10">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="*"/>
-                    </Grid.ColumnDefinitions>
+            <TabItem Header="🔧 Cấu hình Kết nối" Style="{StaticResource TabItemStyle}">
+                <GroupBox Header="Cài đặt Kết nối Modbus" Style="{StaticResource GroupBoxStyle}" Margin="10">
+                    <StackPanel>
+                        <Label Content="Loại kết nối:"/>
+                        <ComboBox SelectedValue="{Binding ModbusSettings.ConnectionType}" SelectedValuePath="Content" Margin="0,0,0,15">
+                            <ComboBoxItem Content="TCP_Individual"/>
+                            <ComboBoxItem Content="TCP_Gateway"/>
+                            <ComboBoxItem Content="RTU_Serial"/>
+                        </ComboBox>
 
-                    <!-- Modbus Connection Settings -->
-                    <GroupBox Grid.Column="0" Header="Cài đặt Kết nối" Style="{StaticResource GroupBoxStyle}">
-                        <StackPanel>
-                            <Label Content="Loại kết nối:"/>
-                            <ComboBox SelectedValue="{Binding ModbusSettings.ConnectionType}" SelectedValuePath="Content" Margin="0,0,0,15">
-                                <ComboBoxItem Content="TCP_Individual"/>
-                                <ComboBoxItem Content="TCP_Gateway"/>
-                                <ComboBoxItem Content="RTU_Serial"/>
-                            </ComboBox>
+                        <Label Content="Gateway IP (cho TCP_Gateway):"/>
+                        <TextBox Text="{Binding ModbusSettings.GatewayIP}" Margin="0,0,0,10"/>
 
-                            <Label Content="Gateway IP (TCP_Gateway):"/>
-                            <TextBox Text="{Binding ModbusSettings.GatewayIP}" Margin="0,0,0,10"/>
+                        <Label Content="Gateway Port (cho TCP_Gateway):"/>
+                        <TextBox Text="{Binding ModbusSettings.GatewayPort}" Margin="0,0,0,10"/>
 
-                            <Label Content="Gateway Port (TCP_Gateway):"/>
-                            <TextBox Text="{Binding ModbusSettings.GatewayPort}" Margin="0,0,0,10"/>
+                        <Label Content="Serial Port (cho RTU_Serial):"/>
+                        <TextBox Text="{Binding ModbusSettings.SerialPort}" Margin="0,0,0,10"/>
 
-                            <Label Content="Serial Port (RTU_Serial):"/>
-                            <TextBox Text="{Binding ModbusSettings.SerialPort}" Margin="0,0,0,10"/>
+                        <Label Content="Baud Rate (cho RTU_Serial):"/>
+                        <TextBox Text="{Binding ModbusSettings.BaudRate}" Margin="0,0,0,15"/>
 
-                            <Label Content="Baud Rate (RTU_Serial):"/>
-                            <TextBox Text="{Binding ModbusSettings.BaudRate}" Margin="0,0,0,15"/>
+                        <Label Content="Timeout kết nối (ms):"/>
+                        <TextBox Text="{Binding ModbusSettings.Timeout}" Margin="0,0,0,10"/>
 
-                            <Label Content="Timeout (ms):"/>
-                            <TextBox Text="{Binding ModbusSettings.Timeout}" Margin="0,0,0,10"/>
+                        <Label Content="Số lần thử lại khi lỗi:"/>
+                        <TextBox Text="{Binding ModbusSettings.RetryCount}" Margin="0,0,0,10"/>
 
-                            <Label Content="Số lần thử lại:"/>
-                            <TextBox Text="{Binding ModbusSettings.RetryCount}" Margin="0,0,0,10"/>
-
-                            <Label Content="Tần suất quét (ms):"/>
-                            <TextBox Text="{Binding ModbusSettings.ScanInterval}" Margin="0,0,0,10"/>
-                        </StackPanel>
-                    </GroupBox>
-
-                    <!-- Register Mapping -->
-                    <GroupBox Grid.Column="1" Header="Ánh xạ Thanh ghi" Style="{StaticResource GroupBoxStyle}">
-                        <StackPanel>
-                            <Label Content="Góc thực tế (Register bắt đầu):"/>
-                            <TextBox Text="{Binding RegisterMapping.ActualAngleStart}" Margin="0,0,0,10"/>
-
-                            <Label Content="Lực thực tế (Register bắt đầu):"/>
-                            <TextBox Text="{Binding RegisterMapping.ActualTorqueStart}" Margin="0,0,0,10"/>
-
-                            <Label Content="Góc Min (Register bắt đầu):"/>
-                            <TextBox Text="{Binding RegisterMapping.MinAngleStart}" Margin="0,0,0,10"/>
-
-                            <Label Content="Góc Max (Register bắt đầu):"/>
-                            <TextBox Text="{Binding RegisterMapping.MaxAngleStart}" Margin="0,0,0,10"/>
-
-                            <Label Content="Lực Min (Register bắt đầu):"/>
-                            <TextBox Text="{Binding RegisterMapping.MinTorqueStart}" Margin="0,0,0,10"/>
-
-                            <Label Content="Lực Max (Register bắt đầu):"/>
-                            <TextBox Text="{Binding RegisterMapping.MaxTorqueStart}" Margin="0,0,0,10"/>
-
-                            <Label Content="Trạng thái (Register):"/>
-                            <TextBox Text="{Binding RegisterMapping.StatusRegister}" Margin="0,0,0,10"/>
-
-                            <TextBlock TextWrapping="Wrap" FontSize="11" Foreground="Gray" Margin="0,10">
-                                Lưu ý: Mỗi giá trị float 32-bit sử dụng 2 register liên tiếp.
-                                Ví dụ: Góc thực tế tại register 0-1, Lực tại 2-3.
-                            </TextBlock>
-                        </StackPanel>
-                    </GroupBox>
-                </Grid>
+                        <Label Content="Tần suất quét tín hiệu (ms):"/>
+                        <TextBox Text="{Binding ModbusSettings.ScanInterval}" Margin="0,0,0,10"/>
+                    </StackPanel>
+                </GroupBox>
             </TabItem>
 
             <!-- Tab 3: Giao diện -->
