@@ -438,7 +438,8 @@ namespace HMI_ScrewingMonitor.ViewModels
 
         private void OpenSettings()
         {
-            var settingsWindow = new HMI_ScrewingMonitor.Views.SettingsWindow();
+            var settingsViewModel = new SettingsViewModel(_modbusService);
+            var settingsWindow = new HMI_ScrewingMonitor.Views.SettingsWindow(settingsViewModel);
             settingsWindow.Owner = Application.Current.MainWindow;
             settingsWindow.ShowDialog();
 

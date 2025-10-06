@@ -87,23 +87,34 @@ This is a **WPF .NET 6 application** that monitors screwing devices via **Modbus
 ### MainViewModel.cs
 - Central view model managing device collection and monitoring state
 - Handles connection management and timer-based data polling
-- Contains hardcoded device initialization (consider moving to config)
+- Loads device configuration from `Config/devices.json` at startup
+- Implements rising edge detection for completion events
 
 ### ModbusService.cs
 - Abstracts Modbus TCP/RTU communication
-- Converts register data to float values for angle/torque measurements
-- Maps specific register addresses to device properties
+- Converts register data to float values for torque measurements
+- Uses configurable register mapping from `Config/devices.json`
+- Supports `ReloadRegisterMapping()` for runtime configuration changes
+- Handles both Input Registers (status) and Holding Registers (data)
 
 ### ScrewingDevice.cs
-- Model representing a screwing device with properties for angle, torque, and status
+- Model representing a screwing device with properties for torque, counters, and status
 - Implements INotifyPropertyChanged for UI binding
-- Contains computed properties for status display
+- Tracks `PreviousCompletionState` for rising edge detection
+- Contains computed properties for status display and result evaluation
 
 ### LoggingService.cs
 - Handles CSV logging of screwing events to daily log files
 - Thread-safe file writing using locks
 - Automatic directory creation in `HistoryLogs/`
 - Logs torque values, timestamps, and pass/fail results
+
+### SettingsViewModel.cs
+- Manages application settings and device configuration
+- Provides UI for editing RegisterMapping (Modbus register addresses)
+- Supports saving/loading configuration from `Config/devices.json`
+- Includes `ModbusSettingsConfig` for connection settings and `RegisterMappingConfig` for register addresses
+- Changes to RegisterMapping trigger `ModbusService.ReloadRegisterMapping()` for immediate effect
 
 ### TorqueChart.cs (Custom Control)
 - Real-time visualization of torque data history
@@ -114,21 +125,41 @@ This is a **WPF .NET 6 application** that monitors screwing devices via **Modbus
 
 ### Device Configuration
 Device settings are stored in `Config/devices.json` with structure:
-- Device identification (ID, name, IP, port)
-- Measurement ranges (min/max angle and torque)
-- Modbus register mapping
-- UI settings (theme, language, refresh interval)
+- **Devices**: Array of device objects with identification (ID, name, model, IP, port, SlaveId), torque ranges, counters, and enabled status
+- **ModbusSettings**: Connection type (TCP_Individual, TCP_Gateway, RTU_Serial), gateway/serial settings, timeout, retry, scan interval
+- **RegisterMapping**: Configurable Modbus register addresses (BUSY, COMP, OK, NG, torque registers) - allows supporting different device models
+- **UI**: Theme, language, refresh interval, grid layout
+
+**Important:** RegisterMapping is now configurable in SettingsViewModel, allowing runtime adjustment of register addresses without code changes.
 
 ## Modbus Register Mapping
 
-The application expects the following register layout per device:
-- Registers 0-1: Actual Angle (32-bit float)
-- Registers 2-3: Actual Torque (32-bit float)
-- Registers 4-5: Min Angle (32-bit float)
-- Registers 6-7: Max Angle (32-bit float)
-- Registers 8-9: Min Torque (32-bit float)
-- Registers 10-11: Max Torque (32-bit float)
-- Register 12: Status (0=NG, 1=OK)
+The application supports **Handy2000 screwing devices** with configurable register mapping in `Config/devices.json`:
+
+### Current Implementation (Handy2000)
+**Input Registers (Control Status):**
+- Register 100082 (Modbus addr 81): BUSY - Device is operating
+- Register 100084 (Modbus addr 83): COMP - Completion signal
+- Register 100086 (Modbus addr 85): OK - Screwing result OK
+- Register 100087 (Modbus addr 86): NG - Screwing result NG
+
+**Holding Registers (Measurement Data - Float32):**
+- Register 308467 (Modbus addr 8466): LastFastenFinalTorque - Actual torque value
+- Register 308481 (Modbus addr 8480): LastFastenTargetTorque - Target torque
+- Register 308482 (Modbus addr 8481): LastFastenMinTorque - Min torque limit
+- Register 308483 (Modbus addr 8482): LastFastenMaxTorque - Max torque limit
+
+**Note:** PLC addresses differ from Modbus addresses by offset (Input: -100001, Holding: -300001)
+
+### Event Detection Logic
+The system uses **rising edge detection** to identify completion events:
+1. Monitor BUSY and COMP registers
+2. Detect completion: `COMP=true AND BUSY=false AND previousCOMP=false`
+3. Read OK/NG status to determine result
+4. Read detailed torque data from holding registers
+5. Update previousCOMP for next cycle
+
+See `DEVICE_REGISTERS.md` for detailed register documentation and implementation examples.
 
 ## Dependencies
 
@@ -149,12 +180,15 @@ The application expects the following register layout per device:
 
 ### Data Conversion
 - The `ConvertRegistersToFloat` method in ModbusService handles 32-bit float conversion from two 16-bit registers
-- Byte order may need adjustment based on actual device implementation
+- Byte order for Handy2000: `[reg1_low, reg1_high, reg0_low, reg0_high]`
+- Different devices may require different byte ordering - test with actual hardware
 
 ### Error Handling
 - Global exception handling in App.xaml.cs
 - Per-device error handling in timer polling
 - Connection status tracking per device
+- Automatic fallback from Input Registers to Holding Registers for simulators that don't support Input Registers
+- Retry mechanism for Modbus communication failures
 
 ### Testing
 The `HMI_TestRunner` project provides console-based unit tests for:

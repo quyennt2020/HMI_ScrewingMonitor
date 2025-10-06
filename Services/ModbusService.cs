@@ -8,8 +8,9 @@ using System.Collections.Generic;
 using NModbus;
 using System.IO.Ports;
 using HMI_ScrewingMonitor.Models;
-using System.IO; 
+using System.IO;
 using System.Text.Json;
+using HMI_ScrewingMonitor.ViewModels;
 
 namespace HMI_ScrewingMonitor.Services
 {
@@ -19,6 +20,9 @@ namespace HMI_ScrewingMonitor.Services
         private Dictionary<int, TcpClient> _deviceConnections;
         private Dictionary<int, IModbusMaster> _deviceMasters;
         private Dictionary<int, DateTime> _lastConnectionAttempt;
+
+        // Register mapping configuration
+        private RegisterMappingConfig _registerMapping;
 
         public bool IsConnected { get; private set; }
 
@@ -35,6 +39,42 @@ namespace HMI_ScrewingMonitor.Services
             _deviceConnections = new Dictionary<int, TcpClient>();
             _deviceMasters = new Dictionary<int, IModbusMaster>();
             _lastConnectionAttempt = new Dictionary<int, DateTime>();
+
+            // Load register mapping from config
+            LoadRegisterMappingConfig();
+        }
+
+        private void LoadRegisterMappingConfig()
+        {
+            try
+            {
+                string configPath = "Config/devices.json";
+                if (File.Exists(configPath))
+                {
+                    var json = File.ReadAllText(configPath);
+                    var config = JsonSerializer.Deserialize<AppConfig>(json);
+                    _registerMapping = config?.RegisterMapping ?? new RegisterMappingConfig();
+                    Console.WriteLine("[CONFIG] Register mapping loaded successfully");
+                }
+                else
+                {
+                    _registerMapping = new RegisterMappingConfig();
+                    Console.WriteLine("[CONFIG] Using default register mapping");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[ERROR] Failed to load register mapping: {ex.Message}");
+                _registerMapping = new RegisterMappingConfig();
+            }
+        }
+
+        /// <summary>
+        /// Reload register mapping configuration from file
+        /// </summary>
+        public void ReloadRegisterMapping()
+        {
+            LoadRegisterMappingConfig();
         }
 
         #region TCP Individual IPs
@@ -58,15 +98,20 @@ namespace HMI_ScrewingMonitor.Services
                 // DEBUG: Log điểm bắt đầu và trạng thái COMP trước đó
                 Console.WriteLine($"[DEBUG] Device {deviceId}: Reading event. Prev COMP: {device.PreviousCompletionState}");
 
-                // HANDY2000 QUY TRÌNH CHÍNH THỨC
-                // Bước 1.1: Đọc COMP (100084) và BUSY (100082)
-                // NModbus địa chỉ: BUSY=81, COMP=83 (vì địa chỉ Modbus bắt đầu từ 0)
+                // HANDY2000 QUY TRÌNH CHÍNH THỨC - SỬ DỤNG CẤU HÌNH
+                // Bước 1.1: Đọc COMP và BUSY từ RegisterMapping
+                var busyAddress = _registerMapping.BUSYRegister - 100001;  // Convert to Modbus address
+                var compAddress = _registerMapping.COMPRegister - 100001;
+
+                Console.WriteLine($"[CONFIG] Device {deviceId}: Using BUSY={_registerMapping.BUSYRegister} (addr={busyAddress}), COMP={_registerMapping.COMPRegister} (addr={compAddress})");
 
                 bool[] statusBits;
                 try
                 {
-                    // Đọc 3 bits: BUSY(81), Reserved(82), COMP(83)
-                    statusBits = await modbusMaster.ReadInputsAsync(slaveId, 81, 3);
+                    // Đọc từ địa chỉ nhỏ nhất với số lượng cần thiết
+                    int startAddress = Math.Min(busyAddress, compAddress);
+                    int count = Math.Max(busyAddress, compAddress) - startAddress + 1;
+                    statusBits = await modbusMaster.ReadInputsAsync(slaveId, (ushort)startAddress, (ushort)count);
                 }
                 catch (Exception ex)
                 {
@@ -98,8 +143,10 @@ namespace HMI_ScrewingMonitor.Services
                     }
                 }
 
-                bool currentBusy = statusBits[0];      // Bit 100082 (BUSY)
-                bool currentComp = statusBits[2];      // Bit 100084 (COMP)
+                // Extract BUSY and COMP từ mảng đã đọc
+                int statusStartAddress = Math.Min(busyAddress, compAddress);
+                bool currentBusy = statusBits[busyAddress - statusStartAddress];
+                bool currentComp = statusBits[compAddress - statusStartAddress];
 
                 Console.WriteLine($"[HANDY2000] Device {deviceId}: BUSY={currentBusy}, COMP={currentComp}, PrevCOMP={device.PreviousCompletionState}");
 
@@ -109,28 +156,39 @@ namespace HMI_ScrewingMonitor.Services
                     // 🎉 PHÁT HIỆN COMPLETION EVENT - Có lần siết mới hoàn thành!
                     Console.WriteLine($"[SUCCESS] Device {deviceId} - COMPLETION DETECTED (COMP Rising Edge, BUSY=OFF)");
 
-                    // Bước 1.3: Đọc kết quả OK/NG từ bits 100085/100086
-                    bool[] resultBits = await modbusMaster.ReadInputsAsync(slaveId, 84, 2);
-                    bool isOk = resultBits[0];  // Bit 100085 (OK)
-                    bool isNg = resultBits[1];  // Bit 100086 (NG)
+                    // Bước 1.3: Đọc kết quả OK/NG từ RegisterMapping
+                    var okAddress = _registerMapping.OKRegister - 100001;
+                    var ngAddress = _registerMapping.NGRegister - 100001;
+                    int resultStartAddress = Math.Min(okAddress, ngAddress);
+                    int resultCount = Math.Max(okAddress, ngAddress) - resultStartAddress + 1;
+
+                    bool[] resultBits = await modbusMaster.ReadInputsAsync(slaveId, (ushort)resultStartAddress, (ushort)resultCount);
+                    bool isOk = resultBits[okAddress - resultStartAddress];
+                    bool isNg = resultBits[ngAddress - resultStartAddress];
 
                     Console.WriteLine($"[HANDY2000] Device {deviceId}: Result OK={isOk}, NG={isNg}");
 
-                    // Bước 1.4: Đọc dữ liệu chi tiết từ Input Registers (3X)
-                    // ĐÚNG THEO TÀI LIỆU HANDY2000:
+                    // Bước 1.4: Đọc dữ liệu chi tiết từ RegisterMapping
 
-                    // LAST FASTEN FINAL TORQUE: 308467 -> NModbus địa chỉ 8466
-                    ushort[] torqueRegister = await modbusMaster.ReadInputRegistersAsync(slaveId, 8466, 1);
-                    float finalTorque = (float)torqueRegister[0] / 10.0f; // Chia 10 theo đặc tả
+                    // Final Torque
+                    var finalTorqueAddress = _registerMapping.LastFastenFinalTorque - 300001;
+                    ushort[] torqueRegister = await modbusMaster.ReadInputRegistersAsync(slaveId, (ushort)finalTorqueAddress, 1);
+                    float finalTorque = (float)torqueRegister[0] / 10.0f;
 
-                    // Đọc Target/Min/Max theo đúng địa chỉ:
-                    // 308481 (TARGET) -> 8480
-                    // 308482 (MIN) -> 8481
-                    // 308483 (MAX) -> 8482
-                    ushort[] setpointRegisters = await modbusMaster.ReadInputRegistersAsync(slaveId, 8480, 3);
-                    float targetTorque = (float)setpointRegisters[0] / 10.0f; // 308481
-                    float minTorque = (float)setpointRegisters[1] / 10.0f;    // 308482
-                    float maxTorque = (float)setpointRegisters[2] / 10.0f;    // 308483
+                    // Target/Min/Max Torque
+                    var targetTorqueAddress = _registerMapping.LastFastenTargetTorque - 300001;
+                    var minTorqueAddress = _registerMapping.LastFastenMinTorque - 300001;
+                    var maxTorqueAddress = _registerMapping.LastFastenMaxTorque - 300001;
+
+                    // Đọc tất cả trong một lần nếu liên tiếp
+                    int torqueStartAddress = Math.Min(Math.Min(targetTorqueAddress, minTorqueAddress), maxTorqueAddress);
+                    int torqueEndAddress = Math.Max(Math.Max(targetTorqueAddress, minTorqueAddress), maxTorqueAddress);
+                    int torqueCount = torqueEndAddress - torqueStartAddress + 1;
+
+                    ushort[] setpointRegisters = await modbusMaster.ReadInputRegistersAsync(slaveId, (ushort)torqueStartAddress, (ushort)torqueCount);
+                    float targetTorque = (float)setpointRegisters[targetTorqueAddress - torqueStartAddress] / 10.0f;
+                    float minTorque = (float)setpointRegisters[minTorqueAddress - torqueStartAddress] / 10.0f;
+                    float maxTorque = (float)setpointRegisters[maxTorqueAddress - torqueStartAddress] / 10.0f;
 
                     Console.WriteLine($"[HANDY2000] Device {deviceId}: Torque Data - Final={finalTorque:F1}, Target={targetTorque:F1}, Range={minTorque:F1}-{maxTorque:F1}");
 

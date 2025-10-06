@@ -192,6 +192,94 @@
                     </GroupBox>
                 </Grid>
             </TabItem>
+
+            <!-- Tab 4: Register Mapping -->
+            <TabItem Header="📋 Thanh ghi Modbus" Style="{StaticResource TabItemStyle}">
+                <Grid Margin="10">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- Input Status Registers -->
+                    <GroupBox Grid.Row="0" Header="Input Status Registers" Style="{StaticResource GroupBoxStyle}">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+
+                            <Label Grid.Row="0" Grid.Column="0" Content="BUSY Register:" FontWeight="Bold"/>
+                            <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding RegisterMapping.BUSYRegister}" Margin="5"/>
+
+                            <Label Grid.Row="1" Grid.Column="0" Content="COMP Register:" FontWeight="Bold"/>
+                            <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding RegisterMapping.COMPRegister}" Margin="5"/>
+
+                            <Label Grid.Row="2" Grid.Column="0" Content="OK Register:" FontWeight="Bold"/>
+                            <TextBox Grid.Row="2" Grid.Column="1" Text="{Binding RegisterMapping.OKRegister}" Margin="5"/>
+
+                            <Label Grid.Row="3" Grid.Column="0" Content="NG Register:" FontWeight="Bold"/>
+                            <TextBox Grid.Row="3" Grid.Column="1" Text="{Binding RegisterMapping.NGRegister}" Margin="5"/>
+                        </Grid>
+                    </GroupBox>
+
+                    <!-- Holding Registers -->
+                    <GroupBox Grid.Row="1" Header="Holding Registers (Torque Data)" Style="{StaticResource GroupBoxStyle}">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+
+                            <Label Grid.Row="0" Grid.Column="0" Content="Final Torque:" FontWeight="Bold"/>
+                            <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding RegisterMapping.LastFastenFinalTorque}" Margin="5"/>
+
+                            <Label Grid.Row="1" Grid.Column="0" Content="Target Torque:" FontWeight="Bold"/>
+                            <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding RegisterMapping.LastFastenTargetTorque}" Margin="5"/>
+
+                            <Label Grid.Row="2" Grid.Column="0" Content="Min Torque:" FontWeight="Bold"/>
+                            <TextBox Grid.Row="2" Grid.Column="1" Text="{Binding RegisterMapping.LastFastenMinTorque}" Margin="5"/>
+
+                            <Label Grid.Row="3" Grid.Column="0" Content="Max Torque:" FontWeight="Bold"/>
+                            <TextBox Grid.Row="3" Grid.Column="1" Text="{Binding RegisterMapping.LastFastenMaxTorque}" Margin="5"/>
+                        </Grid>
+                    </GroupBox>
+
+                    <!-- Help Text -->
+                    <GroupBox Grid.Row="2" Header="Ghi chú" Style="{StaticResource GroupBoxStyle}">
+                        <TextBlock TextWrapping="Wrap" Margin="5">
+                            <Run Text="• Input Status Registers: Tín hiệu điều khiển từ thiết bị Handy2000" FontWeight="Bold"/>
+                            <LineBreak/>
+                            <Run Text="  - BUSY: Thiết bị đang hoạt động"/>
+                            <LineBreak/>
+                            <Run Text="  - COMP: Hoàn thành quy trình siết"/>
+                            <LineBreak/>
+                            <Run Text="  - OK/NG: Kết quả siết"/>
+                            <LineBreak/><LineBreak/>
+                            <Run Text="• Holding Registers: Dữ liệu đo lường mô-men xoắn" FontWeight="Bold"/>
+                            <LineBreak/>
+                            <Run Text="  - Final Torque: Mô-men xoắn cuối cùng"/>
+                            <LineBreak/>
+                            <Run Text="  - Target/Min/Max: Giá trị cài đặt"/>
+                            <LineBreak/><LineBreak/>
+                            <Run Text="⚠️ Lưu ý: Thay đổi cấu hình sẽ có hiệu lực sau khi restart ứng dụng." Foreground="Red" FontWeight="Bold"/>
+                        </TextBlock>
+                    </GroupBox>
+                </Grid>
+            </TabItem>
         </TabControl>
 
         <!-- Buttons -->

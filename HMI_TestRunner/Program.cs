@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using System.IO;
+using System.Text.Json;
 using HMI_ScrewingMonitor.Models;
 using HMI_ScrewingMonitor.Services;
 using HMI_ScrewingMonitor.ViewModels;
@@ -9,6 +11,11 @@ namespace HMI_TestRunner
 {
     class Program
     {
+        static void MainTest(string[] args)
+        {
+            RunTest();
+        }
+
         static void RunTest()
         {
             Console.WriteLine("=== HMI SCREWING MONITOR TEST RUNNER ===");
@@ -160,6 +167,66 @@ namespace HMI_TestRunner
                 else
                 {
                     Console.WriteLine("❌ FAILED - ModbusService should not be connected initially");
+                    failed++;
+                }
+
+                modbusService.Dispose();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ FAILED - Exception: {ex.Message}");
+                failed++;
+            }
+
+            // Test 6: Configuration Loading
+            Console.WriteLine("\nTEST 6: Configuration Loading");
+            try
+            {
+                string configPath = "../Config/devices.json";
+                if (File.Exists(configPath))
+                {
+                    var json = File.ReadAllText(configPath);
+                    var config = JsonSerializer.Deserialize<AppConfig>(json);
+
+                    if (config?.RegisterMapping != null)
+                    {
+                        Console.WriteLine($"✅ PASSED - RegisterMapping loaded: BUSY={config.RegisterMapping.BUSYRegister}, Final Torque={config.RegisterMapping.LastFastenFinalTorque}");
+                        passed++;
+                    }
+                    else
+                    {
+                        Console.WriteLine("❌ FAILED - RegisterMapping is null");
+                        failed++;
+                    }
+                }
+                else
+                {
+                    Console.WriteLine("❌ FAILED - Config file not found");
+                    failed++;
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ FAILED - Exception: {ex.Message}");
+                failed++;
+            }
+
+            // Test 7: SettingsViewModel with ModbusService
+            Console.WriteLine("\nTEST 7: SettingsViewModel with ModbusService");
+            try
+            {
+                var modbusService = new ModbusService();
+                var settingsViewModel = new SettingsViewModel(modbusService);
+
+                if (settingsViewModel.RegisterMapping != null &&
+                    settingsViewModel.RegisterMapping.BUSYRegister > 0)
+                {
+                    Console.WriteLine($"✅ PASSED - SettingsViewModel RegisterMapping: BUSY={settingsViewModel.RegisterMapping.BUSYRegister}");
+                    passed++;
+                }
+                else
+                {
+                    Console.WriteLine("❌ FAILED - RegisterMapping not properly initialized in SettingsViewModel");
                     failed++;
                 }
 

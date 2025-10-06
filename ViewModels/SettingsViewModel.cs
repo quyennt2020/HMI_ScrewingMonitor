@@ -8,6 +8,7 @@ using System.Text.Json;
 using System.Windows;
 using System.Windows.Input;
 using HMI_ScrewingMonitor.Models;
+using HMI_ScrewingMonitor.Services;
 
 namespace HMI_ScrewingMonitor.ViewModels
 {
@@ -15,9 +16,11 @@ namespace HMI_ScrewingMonitor.ViewModels
     {
         private DeviceConfig _selectedDevice;
         private string _configFilePath = "Config/devices.json";
+        private ModbusService _modbusService;
 
         public ObservableCollection<DeviceConfig> Devices { get; set; }
         public ModbusSettingsConfig ModbusSettings { get; set; }
+        public RegisterMappingConfig RegisterMapping { get; set; }
         public UISettingsConfig UISettings { get; set; }
 
         public DeviceConfig SelectedDevice
@@ -38,10 +41,12 @@ namespace HMI_ScrewingMonitor.ViewModels
         public ICommand ReloadCommand { get; }
         public ICommand CancelCommand { get; }
 
-        public SettingsViewModel()
+        public SettingsViewModel(ModbusService modbusService = null)
         {
+            _modbusService = modbusService;
             Devices = new ObservableCollection<DeviceConfig>();
             ModbusSettings = new ModbusSettingsConfig();
+            RegisterMapping = new RegisterMappingConfig();
             UISettings = new UISettingsConfig();
 
             // Initialize commands
@@ -110,6 +115,7 @@ namespace HMI_ScrewingMonitor.ViewModels
                 {
                     Devices = Devices.ToList(),
                     ModbusSettings = ModbusSettings,
+                    RegisterMapping = RegisterMapping,
                     UI = UISettings
                 };
 
@@ -126,6 +132,9 @@ namespace HMI_ScrewingMonitor.ViewModels
                 });
 
                 File.WriteAllText(_configFilePath, json);
+
+                // Reload ModbusService configuration
+                _modbusService?.ReloadRegisterMapping();
 
                 MessageBox.Show("Cấu hình đã được lưu thành công!", "Thông báo",
                     MessageBoxButton.OK, MessageBoxImage.Information);
@@ -159,6 +168,7 @@ namespace HMI_ScrewingMonitor.ViewModels
                         }
 
                         ModbusSettings = config.ModbusSettings ?? new ModbusSettingsConfig();
+                        RegisterMapping = config.RegisterMapping ?? new RegisterMappingConfig();
                         UISettings = config.UI ?? new UISettingsConfig();
 
                         SelectedDevice = Devices.FirstOrDefault();
@@ -226,6 +236,7 @@ namespace HMI_ScrewingMonitor.ViewModels
     {
         public List<DeviceConfig> Devices { get; set; } = new();
         public ModbusSettingsConfig ModbusSettings { get; set; } = new();
+        public RegisterMappingConfig RegisterMapping { get; set; } = new();
         public UISettingsConfig UI { get; set; } = new();
     }
 
@@ -257,6 +268,18 @@ namespace HMI_ScrewingMonitor.ViewModels
         public int RetryCount { get; set; } = 3;
         public int ScanInterval { get; set; } = 1000;
         public string Note { get; set; } = "ConnectionType options: TCP_Individual, TCP_Gateway, RTU_Serial";
+    }
+
+    public class RegisterMappingConfig
+    {
+        public int BUSYRegister { get; set; } = 100082;
+        public int COMPRegister { get; set; } = 100084;
+        public int OKRegister { get; set; } = 100086;
+        public int NGRegister { get; set; } = 100087;
+        public int LastFastenFinalTorque { get; set; } = 308467;
+        public int LastFastenTargetTorque { get; set; } = 308481;
+        public int LastFastenMinTorque { get; set; } = 308482;
+        public int LastFastenMaxTorque { get; set; } = 308483;
     }
 
     public class UISettingsConfig

@@ -162,6 +162,16 @@
     "ScanInterval": 1000,
     "Note": "ConnectionType options: TCP_Individual, TCP_Gateway, RTU_Serial"
   },
+  "RegisterMapping": {
+    "BUSYRegister": 100082,
+    "COMPRegister": 100084,
+    "OKRegister": 100085,
+    "NGRegister": 100086,
+    "LastFastenFinalTorque": 308467,
+    "LastFastenTargetTorque": 308481,
+    "LastFastenMinTorque": 308482,
+    "LastFastenMaxTorque": 308483
+  },
   "UI": {
     "Theme": "Light",
     "Language": "Vietnamese",

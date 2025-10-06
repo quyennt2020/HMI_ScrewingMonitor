@@ -37,24 +37,19 @@ namespace HMI_ScrewingMonitor.Services
                             // Ghi header nếu file mới được tạo
                             if (!fileExists)
                             {
-                                writer.WriteLine("Timestamp,DeviceID,DeviceName,DeviceModel,ActualTorque,TargetTorque,MinTorque,MaxTorque,Result,Status,TotalCount,OKCount,NGCount");
+                                writer.WriteLine("Timestamp,DeviceID,DeviceName,ActualTorque,MinTorque,MaxTorque,TargetTorque,Result");
                             }
 
-                            // Tạo dòng CSV với thông tin chi tiết hơn
-                            var csvLine = string.Format("{0},{1},{2},{3},{4:F2},{5:F1},{6:F1},{7:F1},{8},{9},{10},{11},{12}",
+                            // Tạo dòng CSV theo format yêu cầu
+                            var csvLine = string.Format("{0},{1},{2},{3:F2},{4:F1},{5:F1},{6:F1},{7}",
                                 DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"),
                                 device.DeviceId,
                                 device.DeviceName,
-                                device.DeviceModel,
                                 device.ActualTorque,
-                                device.TargetTorque,
                                 device.MinTorque,
                                 device.MaxTorque,
-                                device.ResultText,
-                                device.Status,
-                                device.TotalCount,
-                                device.OKDeviceCount,
-                                device.NGDeviceCount);
+                                device.TargetTorque,
+                                device.ResultText);
 
                             writer.WriteLine(csvLine);
                         }
