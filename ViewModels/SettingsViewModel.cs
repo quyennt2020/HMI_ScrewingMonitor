@@ -62,6 +62,17 @@ namespace HMI_ScrewingMonitor.ViewModels
 
         private void AddDevice()
         {
+            // Giới hạn tối đa 15 thiết bị
+            if (Devices.Count >= 15)
+            {
+                MessageBox.Show(
+                    "Hệ thống chỉ hỗ trợ tối đa 15 thiết bị.\nVui lòng xóa thiết bị cũ trước khi thêm mới.",
+                    "Đạt giới hạn",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Warning);
+                return;
+            }
+
             var newDevice = new DeviceConfig
             {
                 DeviceId = Devices.Count > 0 ? Devices.Max(d => d.DeviceId) + 1 : 1,
@@ -69,13 +80,7 @@ namespace HMI_ScrewingMonitor.ViewModels
                 IPAddress = "192.168.1.100",
                 Port = 502,
                 SlaveId = Devices.Count + 1,
-                DeviceModel = "ABC",
-                TargetTorque = 10.0,
-                TotalCount = 100,
-                OKCount = 90,
-                NGCount = 10,
-                MinTorque = 7.0,
-                MaxTorque = 10.0,
+                DeviceModel = "Handy2000",
                 Enabled = true
             };
 
@@ -191,7 +196,7 @@ namespace HMI_ScrewingMonitor.ViewModels
         {
             // Load default devices
             Devices.Clear();
-            for (int i = 1; i <= 4; i++)
+            for (int i = 1; i <= 3; i++)
             {
                 Devices.Add(new DeviceConfig
                 {
@@ -200,14 +205,8 @@ namespace HMI_ScrewingMonitor.ViewModels
                     IPAddress = $"192.168.1.{99 + i}",
                     Port = 502,
                     SlaveId = i,
-                    DeviceModel = $"D{i:00}",
-                    TargetTorque = 8.0 + i * 0.3,
-                    TotalCount = 100 + i * 5,
-                    OKCount = 85 + i * 3,
-                    NGCount = 10 + i,
-                    MinTorque = 7.0 + i * 0.5,
-                    MaxTorque = 10.0 + i * 0.5,
-                    Enabled = i <= 3 // Enable first 3 devices by default
+                    DeviceModel = "Handy2000",
+                    Enabled = true
                 });
             }
 
@@ -244,30 +243,18 @@ namespace HMI_ScrewingMonitor.ViewModels
     {
         public int DeviceId { get; set; }
         public string DeviceName { get; set; } = "";
-        public string DeviceModel { get; set; } = "ABC";
+        public string DeviceModel { get; set; } = "Handy2000";
         public string IPAddress { get; set; } = "";
         public int Port { get; set; } = 502;
         public int SlaveId { get; set; }
-        public double MinTorque { get; set; }
-        public double MaxTorque { get; set; }
-        public double TargetTorque { get; set; }
-        public int TotalCount { get; set; } = 100;
-        public int OKCount { get; set; } = 90;
-        public int NGCount { get; set; } = 10;
         public bool Enabled { get; set; } = true;
     }
 
     public class ModbusSettingsConfig
     {
-        public string ConnectionType { get; set; } = "TCP_Individual";
-        public string GatewayIP { get; set; } = "192.168.1.100";
-        public int GatewayPort { get; set; } = 502;
-        public string SerialPort { get; set; } = "COM1";
-        public int BaudRate { get; set; } = 9600;
         public int Timeout { get; set; } = 5000;
         public int RetryCount { get; set; } = 3;
         public int ScanInterval { get; set; } = 1000;
-        public string Note { get; set; } = "ConnectionType options: TCP_Individual, TCP_Gateway, RTU_Serial";
     }
 
     public class RegisterMappingConfig

@@ -26,7 +26,8 @@
       "Bash(findstr:*)",
       "Bash(taskkill:*)",
       "Bash(dotnet add:*)",
-      "Bash(copy:*)"
+      "Bash(copy:*)",
+      "Bash(powershell:*)"
     ],
     "deny": [],
     "ask": []

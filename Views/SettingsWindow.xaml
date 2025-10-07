@@ -102,27 +102,13 @@
 
                             <CheckBox Content="Kích hoạt thiết bị" IsChecked="{Binding Enabled}" Margin="0,10"/>
 
-                            <Separator Margin="0,10"/>
-
-                            <Label Content="Lực siết Min (Nm):"/>
-                            <TextBox Text="{Binding MinTorque}" Margin="0,0,0,10"/>
-
-                            <Label Content="Lực siết Max (Nm):"/>
-                            <TextBox Text="{Binding MaxTorque}" Margin="0,0,0,10"/>
-
-                            <Label Content="Lực đạt (Nm):"/>
-                            <TextBox Text="{Binding TargetTorque}" Margin="0,0,0,10"/>
-
-                            <Separator Margin="0,10"/>
-
-                            <Label Content="Tổng số lần xiết:"/>
-                            <TextBox Text="{Binding TotalCount}" Margin="0,0,0,10"/>
-
-                            <Label Content="Số lần OK:"/>
-                            <TextBox Text="{Binding OKCount}" Margin="0,0,0,10"/>
-
-                            <Label Content="Số lần NG:"/>
-                            <TextBox Text="{Binding NGCount}" Margin="0,0,0,10"/>
+                            <TextBlock TextWrapping="Wrap" Margin="0,20,0,0" Foreground="DarkBlue">
+                                <Run Text="ℹ️ Lưu ý:" FontWeight="Bold"/>
+                                <LineBreak/>
+                                <Run Text="• Lực xiết (Min/Max/Target) được đọc trực tiếp từ thiết bị"/>
+                                <LineBreak/>
+                                <Run Text="• Số liệu OK/NG tự động đếm, không cần cấu hình"/>
+                            </TextBlock>
                         </StackPanel>
                     </GroupBox>
                 </Grid>
@@ -130,34 +116,23 @@
 
             <!-- Tab 2: Cấu hình Modbus -->
             <TabItem Header="🔧 Cấu hình Kết nối" Style="{StaticResource TabItemStyle}">
-                <GroupBox Header="Cài đặt Kết nối Modbus" Style="{StaticResource GroupBoxStyle}" Margin="10">
+                <GroupBox Header="Cài đặt Kết nối Modbus TCP/IP" Style="{StaticResource GroupBoxStyle}" Margin="10">
                     <StackPanel>
-                        <Label Content="Loại kết nối:"/>
-                        <ComboBox SelectedValue="{Binding ModbusSettings.ConnectionType}" SelectedValuePath="Content" Margin="0,0,0,15">
-                            <ComboBoxItem Content="TCP_Individual"/>
-                            <ComboBoxItem Content="TCP_Gateway"/>
-                            <ComboBoxItem Content="RTU_Serial"/>
-                        </ComboBox>
+                        <TextBlock TextWrapping="Wrap" Margin="0,0,0,15" Foreground="DarkBlue">
+                            <Run Text="ℹ️ Hệ thống chỉ hỗ trợ kết nối Modbus TCP/IP (Individual)" FontWeight="Bold"/>
+                            <LineBreak/>
+                            <Run Text="Mỗi thiết bị có địa chỉ IP riêng và cổng Modbus 502"/>
+                        </TextBlock>
 
-                        <Label Content="Gateway IP (cho TCP_Gateway):"/>
-                        <TextBox Text="{Binding ModbusSettings.GatewayIP}" Margin="0,0,0,10"/>
+                        <Separator Margin="0,10"/>
 
-                        <Label Content="Gateway Port (cho TCP_Gateway):"/>
-                        <TextBox Text="{Binding ModbusSettings.GatewayPort}" Margin="0,0,0,10"/>
-
-                        <Label Content="Serial Port (cho RTU_Serial):"/>
-                        <TextBox Text="{Binding ModbusSettings.SerialPort}" Margin="0,0,0,10"/>
-
-                        <Label Content="Baud Rate (cho RTU_Serial):"/>
-                        <TextBox Text="{Binding ModbusSettings.BaudRate}" Margin="0,0,0,15"/>
-
-                        <Label Content="Timeout kết nối (ms):"/>
+                        <Label Content="Timeout kết nối (ms):" FontWeight="Bold"/>
                         <TextBox Text="{Binding ModbusSettings.Timeout}" Margin="0,0,0,10"/>
 
-                        <Label Content="Số lần thử lại khi lỗi:"/>
+                        <Label Content="Số lần thử lại khi lỗi:" FontWeight="Bold"/>
                         <TextBox Text="{Binding ModbusSettings.RetryCount}" Margin="0,0,0,10"/>
 
-                        <Label Content="Tần suất quét tín hiệu (ms):"/>
+                        <Label Content="Tần suất quét tín hiệu (ms):" FontWeight="Bold"/>
                         <TextBox Text="{Binding ModbusSettings.ScanInterval}" Margin="0,0,0,10"/>
                     </StackPanel>
                 </GroupBox>

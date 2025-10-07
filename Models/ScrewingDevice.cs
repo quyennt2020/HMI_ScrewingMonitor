@@ -36,9 +36,21 @@ namespace HMI_ScrewingMonitor.Models
         private DateTime _lastSuccessfulRead = DateTime.MinValue;
         private bool _enabled = true;
         private bool _hasRealData = false;
+        private DateTime _lastResetDate = DateTime.Today;
 
         // Thuộc tính để theo dõi trạng thái của tín hiệu COMP
         public bool PreviousCompletionState { get; set; } = false;
+
+        // Thuộc tính để track ngày reset counters
+        public DateTime LastResetDate
+        {
+            get => _lastResetDate;
+            set
+            {
+                _lastResetDate = value;
+                OnPropertyChanged(nameof(LastResetDate));
+            }
+        }
 
         public ScrewingDevice()
         {
@@ -127,8 +139,11 @@ namespace HMI_ScrewingMonitor.Models
                 {
                     _actualTorque = value;
 
-                    // Use new method to add real torque data
-                    AddRealTorqueData(value);
+                    // Only add to chart if value > 0 (skip disconnect/error values)
+                    if (value > 0)
+                    {
+                        AddRealTorqueData(value);
+                    }
 
                     OnPropertyChanged(nameof(ActualTorque));
                     OnPropertyChanged(nameof(StandardRange));
@@ -310,6 +325,13 @@ namespace HMI_ScrewingMonitor.Models
         // Method to replace demo data with real data when device connects
         public void AddRealTorqueData(float torqueValue)
         {
+            // Skip invalid values (0 or negative) - these come from disconnect/error states
+            if (torqueValue <= 0)
+            {
+                Console.WriteLine($"Device {DeviceId} - SKIPPED INVALID DATA: {torqueValue:F1}Nm (not added to chart)");
+                return;
+            }
+
             // Force clear demo data on first real data
             if (!_hasRealData)
             {
@@ -347,6 +369,19 @@ namespace HMI_ScrewingMonitor.Models
             // mặc dù không có mục mới nào được thêm vào ở đây,
             // nhưng nó đảm bảo biểu đồ được vẽ lại.
             OnPropertyChanged(nameof(TorqueHistory));
+        }
+
+        // Reset daily counters khi sang ngày mới
+        public void ResetDailyCounters()
+        {
+            Console.WriteLine($"[DAILY RESET] Device {DeviceId} - Resetting counters. Old values: Total={TotalCount}, OK={OKDeviceCount}, NG={NGDeviceCount}");
+
+            TotalCount = 0;
+            OKDeviceCount = 0;
+            NGDeviceCount = 0;
+            LastResetDate = DateTime.Today;
+
+            Console.WriteLine($"[DAILY RESET] Device {DeviceId} - Counters reset to 0");
         }
 
         public event PropertyChangedEventHandler PropertyChanged;
