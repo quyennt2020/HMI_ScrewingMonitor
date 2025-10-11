@@ -99,6 +99,8 @@
                            Style="{StaticResource ControlButtonStyle}"/>
                     <Button Content="⚙️ Cấu hình" Command="{Binding OpenSettingsCommand}"
                            Style="{StaticResource ControlButtonStyle}"/>
+                    <Button Content="ℹ️ Giới thiệu" Command="{Binding OpenAboutCommand}"
+                           Style="{StaticResource ControlButtonStyle}"/>
                 </StackPanel>
                 
                 <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">

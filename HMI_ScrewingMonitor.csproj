@@ -4,7 +4,7 @@
     <TargetFramework>net6.0-windows</TargetFramework>
     <UseWPF>true</UseWPF>
     <AssemblyTitle>HMI Screwing Monitor</AssemblyTitle>
-    <AssemblyDescription>HMI application for monitoring screwing devices via Modbus</AssemblyDescription>
+    <AssemblyDescription>Hệ thống giám sát thiết bị vặn vít tự động qua giao thức Modbus</AssemblyDescription>
     <AssemblyVersion>1.0.0.0</AssemblyVersion>
     <FileVersion>1.0.0.0</FileVersion>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
@@ -15,5 +15,14 @@
     <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
     <PackageReference Include="NModbus" Version="3.0.72" />
     <PackageReference Include="System.IO.Ports" Version="7.0.0" />
+    <PackageReference Include="System.Management" Version="7.0.0" />
+  </ItemGroup>
+
+  <!-- Exclude LicenseGenerator folder (separate console app) -->
+  <ItemGroup>
+    <Compile Remove="LicenseGenerator\**" />
+    <EmbeddedResource Remove="LicenseGenerator\**" />
+    <None Remove="LicenseGenerator\**" />
+    <Page Remove="LicenseGenerator\**" />
   </ItemGroup>
 </Project>

@@ -34,6 +34,7 @@ namespace HMI_ScrewingMonitor.ViewModels
         public ICommand StartMonitoringCommand { get; }
         public ICommand StopMonitoringCommand { get; }
         public ICommand OpenSettingsCommand { get; }
+        public ICommand OpenAboutCommand { get; }
 
         public bool IsMonitoring
         {
@@ -118,6 +119,7 @@ namespace HMI_ScrewingMonitor.ViewModels
             StartMonitoringCommand = new RelayCommand(StartMonitoring);
             StopMonitoringCommand = new RelayCommand(StopMonitoring);
             OpenSettingsCommand = new RelayCommand(OpenSettings);
+            OpenAboutCommand = new RelayCommand(OpenAbout);
 
             _timer = new DispatcherTimer
             {
@@ -440,9 +442,16 @@ namespace HMI_ScrewingMonitor.ViewModels
 
             // Reload modbus settings as they might have changed
             _modbusSettings = LoadModbusConfig();
-            _timer.Interval = _modbusSettings.ScanInterval > 0 
-                ? TimeSpan.FromMilliseconds(_modbusSettings.ScanInterval) 
+            _timer.Interval = _modbusSettings.ScanInterval > 0
+                ? TimeSpan.FromMilliseconds(_modbusSettings.ScanInterval)
                 : TimeSpan.FromSeconds(1);
+        }
+
+        private void OpenAbout()
+        {
+            var aboutWindow = new HMI_ScrewingMonitor.Views.AboutWindow();
+            aboutWindow.Owner = Application.Current.MainWindow;
+            aboutWindow.ShowDialog();
         }
 
         private void LoadDevicesFromConfig()
