@@ -89,19 +89,200 @@
       "Port": 502,
       "SlaveId": 10,
       "Enabled": true
+    },
+    {
+      "DeviceId": 11,
+      "DeviceName": "M\u00E1y v\u1EB7n v\u00EDt #11",
+      "DeviceModel": "Handy2000",
+      "IPAddress": "192.168.1.100",
+      "Port": 502,
+      "SlaveId": 11,
+      "Enabled": true
+    },
+    {
+      "DeviceId": 12,
+      "DeviceName": "M\u00E1y v\u1EB7n v\u00EDt #12",
+      "DeviceModel": "Handy2000",
+      "IPAddress": "192.168.1.100",
+      "Port": 502,
+      "SlaveId": 12,
+      "Enabled": true
+    },
+    {
+      "DeviceId": 13,
+      "DeviceName": "M\u00E1y v\u1EB7n v\u00EDt #13",
+      "DeviceModel": "Handy2000",
+      "IPAddress": "192.168.1.100",
+      "Port": 502,
+      "SlaveId": 13,
+      "Enabled": true
+    },
+    {
+      "DeviceId": 14,
+      "DeviceName": "M\u00E1y v\u1EB7n v\u00EDt #14",
+      "DeviceModel": "Handy2000",
+      "IPAddress": "127.0.0.14",
+      "Port": 502,
+      "SlaveId": 14,
+      "Enabled": true
+    },
+    {
+      "DeviceId": 15,
+      "DeviceName": "M\u00E1y v\u1EB7n v\u00EDt #15",
+      "DeviceModel": "Handy2000",
+      "IPAddress": "127.0.0.15",
+      "Port": 502,
+      "SlaveId": 15,
+      "Enabled": true
+    },
+    {
+      "DeviceId": 16,
+      "DeviceName": "M\u00E1y v\u1EB7n v\u00EDt #16",
+      "DeviceModel": "Handy2000",
+      "IPAddress": "127.0.0.16",
+      "Port": 502,
+      "SlaveId": 16,
+      "Enabled": true
+    },
+    {
+      "DeviceId": 17,
+      "DeviceName": "M\u00E1y v\u1EB7n v\u00EDt #17",
+      "DeviceModel": "Handy2000",
+      "IPAddress": "192.168.1.100",
+      "Port": 502,
+      "SlaveId": 17,
+      "Enabled": true
+    },
+    {
+      "DeviceId": 18,
+      "DeviceName": "M\u00E1y v\u1EB7n v\u00EDt #18",
+      "DeviceModel": "Handy2000",
+      "IPAddress": "192.168.1.100",
+      "Port": 502,
+      "SlaveId": 18,
+      "Enabled": true
+    },
+    {
+      "DeviceId": 19,
+      "DeviceName": "M\u00E1y v\u1EB7n v\u00EDt #19",
+      "DeviceModel": "Handy2000",
+      "IPAddress": "192.168.1.100",
+      "Port": 502,
+      "SlaveId": 19,
+      "Enabled": true
+    },
+    {
+      "DeviceId": 20,
+      "DeviceName": "M\u00E1y v\u1EB7n v\u00EDt #20",
+      "DeviceModel": "Handy2000",
+      "IPAddress": "192.168.1.100",
+      "Port": 502,
+      "SlaveId": 20,
+      "Enabled": true
+    },
+    {
+      "DeviceId": 21,
+      "DeviceName": "M\u00E1y v\u1EB7n v\u00EDt #21",
+      "DeviceModel": "Handy2000",
+      "IPAddress": "192.168.1.100",
+      "Port": 502,
+      "SlaveId": 21,
+      "Enabled": true
+    },
+    {
+      "DeviceId": 22,
+      "DeviceName": "M\u00E1y v\u1EB7n v\u00EDt #22",
+      "DeviceModel": "Handy2000",
+      "IPAddress": "192.168.1.100",
+      "Port": 502,
+      "SlaveId": 22,
+      "Enabled": true
+    },
+    {
+      "DeviceId": 23,
+      "DeviceName": "M\u00E1y v\u1EB7n v\u00EDt #23",
+      "DeviceModel": "Handy2000",
+      "IPAddress": "192.168.1.100",
+      "Port": 502,
+      "SlaveId": 23,
+      "Enabled": true
+    },
+    {
+      "DeviceId": 24,
+      "DeviceName": "M\u00E1y v\u1EB7n v\u00EDt #24",
+      "DeviceModel": "Handy2000",
+      "IPAddress": "192.168.1.100",
+      "Port": 502,
+      "SlaveId": 24,
+      "Enabled": true
+    },
+    {
+      "DeviceId": 25,
+      "DeviceName": "M\u00E1y v\u1EB7n v\u00EDt #25",
+      "DeviceModel": "Handy2000",
+      "IPAddress": "192.168.1.100",
+      "Port": 502,
+      "SlaveId": 25,
+      "Enabled": true
+    },
+    {
+      "DeviceId": 26,
+      "DeviceName": "M\u00E1y v\u1EB7n v\u00EDt #26",
+      "DeviceModel": "Handy2000",
+      "IPAddress": "192.168.1.100",
+      "Port": 502,
+      "SlaveId": 26,
+      "Enabled": true
+    },
+    {
+      "DeviceId": 27,
+      "DeviceName": "M\u00E1y v\u1EB7n v\u00EDt #27",
+      "DeviceModel": "Handy2000",
+      "IPAddress": "192.168.1.100",
+      "Port": 502,
+      "SlaveId": 27,
+      "Enabled": true
+    },
+    {
+      "DeviceId": 28,
+      "DeviceName": "M\u00E1y v\u1EB7n v\u00EDt #28",
+      "DeviceModel": "Handy2000",
+      "IPAddress": "192.168.1.100",
+      "Port": 502,
+      "SlaveId": 28,
+      "Enabled": true
+    },
+    {
+      "DeviceId": 29,
+      "DeviceName": "M\u00E1y v\u1EB7n v\u00EDt #29",
+      "DeviceModel": "Handy2000",
+      "IPAddress": "192.168.1.100",
+      "Port": 502,
+      "SlaveId": 29,
+      "Enabled": true
+    },
+    {
+      "DeviceId": 30,
+      "DeviceName": "M\u00E1y v\u1EB7n v\u00EDt #30",
+      "DeviceModel": "Handy2000",
+      "IPAddress": "127.0.0.30",
+      "Port": 502,
+      "SlaveId": 30,
+      "Enabled": true
     }
   ],
   "ModbusSettings": {
-    "Timeout": 5000,
+    "Timeout": 1000,
     "RetryCount": 3,
-    "ScanInterval": 1000
+    "ScanInterval": 1000,
+    "EnableConnectionLogging": false
   },
   "RegisterMapping": {
     "BUSYRegister": 100082,
     "COMPRegister": 100084,
     "OKRegister": 100085,
     "NGRegister": 100086,
-    "LastFastenFinalTorque": 308467,
+    "LastFastenFinalTorque": 308213,
     "LastFastenTargetTorque": 308481,
     "LastFastenMinTorque": 308482,
     "LastFastenMaxTorque": 308483

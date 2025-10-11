@@ -71,3 +71,13 @@ publish/
 # Backup files
 *.bak
 backup/
+*.rar
+*.zip
+
+# Office files (documentation should be in separate folder)
+*.pptx
+*.docx
+*.xlsx
+
+# Copy files
+*- Copy.*

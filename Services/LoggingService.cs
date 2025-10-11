@@ -41,7 +41,7 @@ namespace HMI_ScrewingMonitor.Services
                             }
 
                             // Tạo dòng CSV theo format yêu cầu
-                            var csvLine = string.Format("{0},{1},{2},{3:F2},{4:F1},{5:F1},{6:F1},{7}",
+                            var csvLine = string.Format("{0},{1},{2},{3:F2},{4:F2},{5:F2},{6:F2},{7}",
                                 DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"),
                                 device.DeviceId,
                                 device.DeviceName,

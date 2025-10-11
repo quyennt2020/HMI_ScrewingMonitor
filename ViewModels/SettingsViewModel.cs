@@ -62,11 +62,11 @@ namespace HMI_ScrewingMonitor.ViewModels
 
         private void AddDevice()
         {
-            // Giới hạn tối đa 15 thiết bị
-            if (Devices.Count >= 15)
+            // Giới hạn tối đa 30 thiết bị
+            if (Devices.Count >= 30)
             {
                 MessageBox.Show(
-                    "Hệ thống chỉ hỗ trợ tối đa 15 thiết bị.\nVui lòng xóa thiết bị cũ trước khi thêm mới.",
+                    "Hệ thống chỉ hỗ trợ tối đa 30 thiết bị.\nVui lòng xóa thiết bị cũ trước khi thêm mới.",
                     "Đạt giới hạn",
                     MessageBoxButton.OK,
                     MessageBoxImage.Warning);
@@ -255,6 +255,7 @@ namespace HMI_ScrewingMonitor.ViewModels
         public int Timeout { get; set; } = 5000;
         public int RetryCount { get; set; } = 3;
         public int ScanInterval { get; set; } = 1000;
+        public bool EnableConnectionLogging { get; set; } = false; // Bật/tắt ghi log kết nối
     }
 
     public class RegisterMappingConfig

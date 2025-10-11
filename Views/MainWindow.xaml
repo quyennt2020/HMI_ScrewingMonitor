@@ -284,14 +284,14 @@
 
                                         <Border Grid.Row="1" Grid.Column="1" BorderBrush="Black" BorderThickness="1"
                                                Margin="2">
-                                            <TextBlock Text="{Binding TargetTorque, StringFormat='{}{0:F1}'}"
+                                            <TextBlock Text="{Binding TargetTorque, StringFormat='{}{0:F2}'}"
                                                      HorizontalAlignment="Center" VerticalAlignment="Center"
                                                      FontSize="14" FontWeight="Bold"/>
                                         </Border>
 
                                         <Border Grid.Row="1" Grid.Column="2" BorderBrush="Black" BorderThickness="1"
                                                Margin="2">
-                                            <TextBlock Text="{Binding ActualTorque, StringFormat='{}{0:F1}'}"
+                                            <TextBlock Text="{Binding ActualTorque, StringFormat='{}{0:F2}'}"
                                                      HorizontalAlignment="Center" VerticalAlignment="Center"
                                                      FontSize="14" FontWeight="Bold"/>
                                         </Border>
@@ -333,7 +333,7 @@
                                         </Grid.RowDefinitions>
 
                                         <!-- Max label -->
-                                        <TextBlock Grid.Row="0" Text="{Binding MaxTorque, StringFormat='Max({0:F1} Nm)'}"
+                                        <TextBlock Grid.Row="0" Text="{Binding MaxTorque, StringFormat='Max({0:F2} Nm)'}"
                                                  HorizontalAlignment="Right" VerticalAlignment="Center"
                                                  FontSize="10" Margin="0,0,10,0"/>
 
@@ -344,7 +344,7 @@
                                                             MaxTorque="{Binding MaxTorque}"/>
 
                                         <!-- Min label -->
-                                        <TextBlock Grid.Row="2" Text="{Binding MinTorque, StringFormat='Min({0:F1} Nm)'}"
+                                        <TextBlock Grid.Row="2" Text="{Binding MinTorque, StringFormat='Min({0:F2} Nm)'}"
                                                  HorizontalAlignment="Right" VerticalAlignment="Center"
                                                  FontSize="10" Margin="0,0,10,0"/>
                                     </Grid>

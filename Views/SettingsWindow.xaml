@@ -134,6 +134,18 @@
 
                         <Label Content="Tần suất quét tín hiệu (ms):" FontWeight="Bold"/>
                         <TextBox Text="{Binding ModbusSettings.ScanInterval}" Margin="0,0,0,10"/>
+
+                        <Separator Margin="0,15"/>
+
+                        <Label Content="Ghi log kết nối:" FontWeight="Bold"/>
+                        <CheckBox Content="Bật ghi log kết nối Modbus (Connection Log)"
+                                 IsChecked="{Binding ModbusSettings.EnableConnectionLogging}"
+                                 Margin="0,5,0,5"/>
+                        <TextBlock TextWrapping="Wrap" Margin="5,0,0,0" Foreground="Gray" FontStyle="Italic">
+                            <Run Text="Ghi chi tiết quá trình kết nối vào thư mục ConnectionLogs/ để debug."/>
+                            <LineBreak/>
+                            <Run Text="Log bao gồm: thời gian kết nối, thành công/thất bại, lỗi chi tiết."/>
+                        </TextBlock>
                     </StackPanel>
                 </GroupBox>
             </TabItem>

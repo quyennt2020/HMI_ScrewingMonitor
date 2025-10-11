@@ -27,7 +27,8 @@
       "Bash(taskkill:*)",
       "Bash(dotnet add:*)",
       "Bash(copy:*)",
-      "Bash(powershell:*)"
+      "Bash(powershell:*)",
+      "Bash(cat:*)"
     ],
     "deny": [],
     "ask": []

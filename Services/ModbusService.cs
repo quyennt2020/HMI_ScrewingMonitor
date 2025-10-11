@@ -11,6 +11,7 @@ using HMI_ScrewingMonitor.Models;
 using System.IO;
 using System.Text.Json;
 using HMI_ScrewingMonitor.ViewModels;
+using System.Diagnostics;
 
 namespace HMI_ScrewingMonitor.Services
 {
@@ -173,7 +174,7 @@ namespace HMI_ScrewingMonitor.Services
                     // Final Torque
                     var finalTorqueAddress = _registerMapping.LastFastenFinalTorque - 300001;
                     ushort[] torqueRegister = await modbusMaster.ReadInputRegistersAsync(slaveId, (ushort)finalTorqueAddress, 1);
-                    float finalTorque = (float)torqueRegister[0] / 10.0f;
+                    float finalTorque = (float)torqueRegister[0] / 100.0f;
 
                     // Target/Min/Max Torque
                     var targetTorqueAddress = _registerMapping.LastFastenTargetTorque - 300001;
@@ -186,9 +187,9 @@ namespace HMI_ScrewingMonitor.Services
                     int torqueCount = torqueEndAddress - torqueStartAddress + 1;
 
                     ushort[] setpointRegisters = await modbusMaster.ReadInputRegistersAsync(slaveId, (ushort)torqueStartAddress, (ushort)torqueCount);
-                    float targetTorque = (float)setpointRegisters[targetTorqueAddress - torqueStartAddress] / 10.0f;
-                    float minTorque = (float)setpointRegisters[minTorqueAddress - torqueStartAddress] / 10.0f;
-                    float maxTorque = (float)setpointRegisters[maxTorqueAddress - torqueStartAddress] / 10.0f;
+                    float targetTorque = (float)setpointRegisters[targetTorqueAddress - torqueStartAddress] / 100.0f;
+                    float minTorque = (float)setpointRegisters[minTorqueAddress - torqueStartAddress] / 100.0f;
+                    float maxTorque = (float)setpointRegisters[maxTorqueAddress - torqueStartAddress] / 100.0f;
 
                     Console.WriteLine($"[HANDY2000] Device {deviceId}: Torque Data - Final={finalTorque:F1}, Target={targetTorque:F1}, Range={minTorque:F1}-{maxTorque:F1}");
 
@@ -290,7 +291,7 @@ namespace HMI_ScrewingMonitor.Services
 
                     // Bước 3: Đọc giá trị lực siết
                     ushort[] torqueRegister = await _gatewayMaster.ReadInputRegistersAsync(slaveId, 8464, 1);
-                    float finalTorque = (float)torqueRegister[0] / 10.0f;
+                    float finalTorque = (float)torqueRegister[0] / 100.0f;
 
                     // Bước 4: Đọc bộ đếm
                     ushort[] counterRegister = await _gatewayMaster.ReadInputRegistersAsync(slaveId, 8210, 1);
@@ -298,9 +299,9 @@ namespace HMI_ScrewingMonitor.Services
 
                     // Đọc các giá trị cài đặt của lần vặn cuối
                     ushort[] setpointRegisters = await _gatewayMaster.ReadInputRegistersAsync(slaveId, 8480, 3);
-                    float targetTorque = (float)setpointRegisters[0] / 10.0f;
-                    float minTorque = (float)setpointRegisters[1] / 10.0f;
-                    float maxTorque = (float)setpointRegisters[2] / 10.0f;
+                    float targetTorque = (float)setpointRegisters[0] / 100.0f;
+                    float minTorque = (float)setpointRegisters[1] / 100.0f;
+                    float maxTorque = (float)setpointRegisters[2] / 100.0f;
 
                     Console.WriteLine($"Device {device.DeviceId} (Gateway) - Setpoints Read: Target={targetTorque}, Min={minTorque}, Max={maxTorque}");
 
@@ -373,6 +374,20 @@ namespace HMI_ScrewingMonitor.Services
 
             _lastConnectionAttempt[deviceId] = DateTime.Now;
 
+            // Start timing for connection logging
+            var connectionTimer = Stopwatch.StartNew();
+            long tcpTimeMs = 0;
+            long modbusTimeMs = 0;
+
+            // Log connection start
+            ConnectionLogger.LogConnectionStart(
+                deviceId,
+                device.DeviceName,
+                device.IPAddress,
+                device.Port,
+                device.SlaveId
+            );
+
             try
             {
                 // Close existing connection if any
@@ -392,24 +407,51 @@ namespace HMI_ScrewingMonitor.Services
 
                 Console.WriteLine($"[DEBUG] Device {deviceId}: Starting TCP connection...");
 
+                // Time TCP connection
+                var tcpTimer = Stopwatch.StartNew();
+
                 // Use CancellationToken for connection timeout
                 using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
                 await tcpClient.ConnectAsync(device.IPAddress, device.Port).ConfigureAwait(false);
 
+                tcpTimer.Stop();
+                tcpTimeMs = tcpTimer.ElapsedMilliseconds;
+
                 Console.WriteLine($"[DEBUG] Device {deviceId}: TCP connected, creating Modbus master...");
+
+                // Time Modbus master creation
+                var modbusTimer = Stopwatch.StartNew();
 
                 var factory = new ModbusFactory();
                 var master = factory.CreateMaster(tcpClient);
+
+                modbusTimer.Stop();
+                modbusTimeMs = modbusTimer.ElapsedMilliseconds;
 
                 _deviceConnections[deviceId] = tcpClient;
                 _deviceMasters[deviceId] = master;
 
                 Console.WriteLine($"CONNECTED to Device {deviceId} successfully");
+
+                // Log success with timing
+                ConnectionLogger.LogConnectionSuccess(deviceId, tcpTimeMs, modbusTimeMs);
+
                 return true;
             }
             catch (Exception ex)
             {
+                connectionTimer.Stop();
+
                 Console.WriteLine($"CONNECTION FAILED - Device {deviceId}: {ex.Message}");
+
+                // Log failure with timing and exception details
+                ConnectionLogger.LogConnectionFailure(
+                    deviceId,
+                    connectionTimer.ElapsedMilliseconds,
+                    ex.Message,
+                    ex
+                );
+
                 return false;
             }
         }

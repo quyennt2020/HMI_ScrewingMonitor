@@ -226,8 +226,9 @@ namespace HMI_ScrewingMonitor.ViewModels
         {
             try
             {
-                // Load Modbus settings
+                // Load Modbus settings và cấu hình connection logging
                 _modbusSettings = LoadModbusConfig();
+                ConnectionLogger.IsEnabled = _modbusSettings.EnableConnectionLogging;
 
                 // Chỉ hỗ trợ TCP Individual - Kết nối tất cả thiết bị song song
                 var enabledDevices = Devices.Where(d => d.Enabled).ToList();
@@ -237,6 +238,9 @@ namespace HMI_ScrewingMonitor.ViewModels
                 {
                     Console.WriteLine($"[CONNECT] Will connect to Device {dev.DeviceId}: {dev.DeviceName} at {dev.IPAddress}:{dev.Port}");
                 }
+
+                // Start connection logging session
+                ConnectionLogger.StartConnectionSession(totalDevices);
 
                 // Update UI with progress
                 ConnectionStatus = $"Đang kết nối 0/{totalDevices} thiết bị...";
@@ -276,6 +280,9 @@ namespace HMI_ScrewingMonitor.ViewModels
                 var results = await Task.WhenAll(connectionTasks);
                 var finalConnectedCount = results.Count(r => r);
 
+                // End connection logging session
+                ConnectionLogger.EndConnectionSession();
+
                 // Kiểm tra số thiết bị kết nối thành công
                 if (finalConnectedCount > 0)
                 {
@@ -294,6 +301,9 @@ namespace HMI_ScrewingMonitor.ViewModels
             catch (Exception ex)
             {
                 ConnectionStatus = $"Lỗi kết nối: {ex.Message}";
+
+                // End connection logging session even on error
+                ConnectionLogger.EndConnectionSession();
             }
         }
 
@@ -317,23 +327,52 @@ namespace HMI_ScrewingMonitor.ViewModels
             return new HMI_ScrewingMonitor.ViewModels.ModbusSettingsConfig();
         }
 
+        private HMI_ScrewingMonitor.ViewModels.UISettingsConfig LoadUIConfig()
+        {
+            try
+            {
+                string configPath = "Config/devices.json";
+                if (File.Exists(configPath))
+                {
+                    var json = File.ReadAllText(configPath);
+                    var config = JsonSerializer.Deserialize<HMI_ScrewingMonitor.ViewModels.AppConfig>(json);
+                    return config?.UI ?? new HMI_ScrewingMonitor.ViewModels.UISettingsConfig();
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error loading UI config: {ex.Message}");
+            }
+
+            return new HMI_ScrewingMonitor.ViewModels.UISettingsConfig();
+        }
+
         private void Disconnect()
         {
             // Auto-stop monitoring before disconnect
             StopMonitoring();
 
-            // Ngắt kết nối từng thiết bị riêng lẻ
-            foreach (var device in Devices.Where(d => d.IsConnected))
+            Console.WriteLine("[DISCONNECT] Starting disconnect process...");
+
+            // Ngắt kết nối và reset TẤT CẢ thiết bị để tránh race condition với Timer_Tick
+            foreach (var device in Devices)
             {
-                _modbusService.DisconnectFromDevice(device.DeviceId);
+                // Chỉ gọi DisconnectFromDevice nếu device đang kết nối
+                if (device.IsConnected)
+                {
+                    _modbusService.DisconnectFromDevice(device.DeviceId);
+                    Console.WriteLine($"[DISCONNECT] Disconnected Device {device.DeviceId}");
+                }
+
+                // Reset trạng thái cho TẤT CẢ devices (kể cả đang offline)
                 device.IsConnected = false;
                 device.Status = "--";
                 device.ActualTorque = 0;
                 device.IsOK = false;
+                device.LastSuccessfulRead = DateTime.MinValue;
+
                 // GIỮ NGUYÊN dữ liệu thống kê (TotalCount, OKDeviceCount, NGDeviceCount)
                 // Counters chỉ reset vào 00:00 mỗi ngày, không reset khi ngắt kết nối
-
-                device.LastSuccessfulRead = DateTime.MinValue;  // Reset health tracking
             }
 
             // Ngắt kết nối chung (cho Gateway)
@@ -342,6 +381,7 @@ namespace HMI_ScrewingMonitor.ViewModels
             ConnectionStatus = "Đã ngắt kết nối";
             UpdateButtonStates();
             OnPropertyChanged(nameof(ConnectedDevicesCount));
+            Console.WriteLine($"[DISCONNECT] Disconnect complete. Connected devices: {ConnectedDevicesCount}");
         }
 
         private void StartMonitoring()
@@ -425,9 +465,35 @@ namespace HMI_ScrewingMonitor.ViewModels
 
                             if (existingDevice != null)
                             {
-                                // Device đã tồn tại - Chỉ update config, GIỮ NGUYÊN TorqueHistory và trạng thái
-                                Console.WriteLine($"[CONFIG UPDATE] Device {deviceConfig.DeviceId}: Updating config, preserving chart data and connection state");
+                                // Device đã tồn tại - Kiểm tra xem connection config có thay đổi không
+                                bool ipChanged = existingDevice.IPAddress != deviceConfig.IPAddress;
+                                bool portChanged = existingDevice.Port != deviceConfig.Port;
+                                bool slaveIdChanged = existingDevice.SlaveId != deviceConfig.SlaveId;
 
+                                if (ipChanged || portChanged || slaveIdChanged)
+                                {
+                                    Console.WriteLine($"[CONFIG CHANGE] Device {deviceConfig.DeviceId}: Connection config changed");
+                                    Console.WriteLine($"  IP: {existingDevice.IPAddress} → {deviceConfig.IPAddress}");
+                                    Console.WriteLine($"  Port: {existingDevice.Port} → {deviceConfig.Port}");
+                                    Console.WriteLine($"  SlaveId: {existingDevice.SlaveId} → {deviceConfig.SlaveId}");
+
+                                    // Tự động disconnect connection cũ trước khi update config mới
+                                    if (existingDevice.IsConnected)
+                                    {
+                                        Console.WriteLine($"[CONFIG AUTO-DISCONNECT] Device {deviceConfig.DeviceId}: Disconnecting old connection");
+                                        _modbusService.DisconnectFromDevice(existingDevice.DeviceId);
+                                        existingDevice.IsConnected = false;
+                                        existingDevice.Status = "Cấu hình đã thay đổi - Cần kết nối lại";
+                                        existingDevice.ActualTorque = 0;
+                                        existingDevice.IsOK = false;
+                                    }
+                                }
+                                else
+                                {
+                                    Console.WriteLine($"[CONFIG UPDATE] Device {deviceConfig.DeviceId}: Updating config, preserving chart data and connection state");
+                                }
+
+                                // Cập nhật config mới
                                 existingDevice.DeviceName = deviceConfig.DeviceName;
                                 existingDevice.DeviceModel = deviceConfig.DeviceModel;
                                 existingDevice.IPAddress = deviceConfig.IPAddress;
@@ -438,7 +504,8 @@ namespace HMI_ScrewingMonitor.ViewModels
                                 // Torque values (Min/Max/Target) sẽ được đọc từ thiết bị Modbus, không load từ config
                                 // Counters (Total/OK/NG) tự động đếm, không load từ config
 
-                                // GIỮ NGUYÊN: TorqueHistory, IsConnected, ActualTorque, Status, IsOK, counters
+                                // GIỮ NGUYÊN: TorqueHistory, counters (nếu không disconnect)
+                                // IsConnected, ActualTorque, Status, IsOK đã được reset nếu config thay đổi
                             }
                             else
                             {
@@ -534,6 +601,10 @@ namespace HMI_ScrewingMonitor.ViewModels
                 {
                     // Thử kết nối lại nếu thiết bị đang offline
                     bool reconnected = await _modbusService.ConnectToDevice(device);
+
+                    // Check lại IsMonitoring sau await để tránh race condition
+                    if (!IsMonitoring) continue;
+
                     // Nếu kết nối lại thất bại, bỏ qua thiết bị này trong chu kỳ hiện tại
                     if (!reconnected)
                     {
@@ -545,6 +616,9 @@ namespace HMI_ScrewingMonitor.ViewModels
                 {
                     // Chỉ hỗ trợ TCP Individual
                     DeviceReadEvent eventResult = await _modbusService.ReadDeviceEvent_Individual(device);
+
+                    // Check lại IsMonitoring sau await để tránh race condition khi Disconnect()
+                    if (!IsMonitoring) continue;
 
                     if (eventResult != null && eventResult.Success)
                     {

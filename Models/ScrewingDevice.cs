@@ -244,7 +244,7 @@ namespace HMI_ScrewingMonitor.Models
         public string ResultText => !IsConnected ? "--" : (IsOK ? "OK" : "NG");
         public string ResultColor => !IsConnected ? "Gray" : (IsOK ? "Green" : "Red");
         public string StatusColor => IsConnected ? "Green" : "Red";
-        public string StandardRange => $"{MinTorque:F1}~{MaxTorque:F1}";
+        public string StandardRange => $"{MinTorque:F2}~{MaxTorque:F2}";
 
         // Device Status Visual Indicators
         public string DeviceStatusText
