@@ -150,13 +150,22 @@
                     </Border.Effect>
                     <StackPanel>
                         <TextBlock Text="Công ty:" Style="{StaticResource InfoLabel}"/>
-                        <TextBlock Text="Your Company Name" Style="{StaticResource InfoValue}"/>
+                        <TextBlock Text="CÔNG TY TNHH SÁNG TẠO IDE VIỆT NAM" Style="{StaticResource InfoValue}"/>
 
-                        <TextBlock Text="Hỗ trợ kỹ thuật:" Style="{StaticResource InfoLabel}"/>
-                        <TextBlock Text="support@example.com" Style="{StaticResource InfoValue}"/>
+                        <TextBlock Text="Email hỗ trợ:" Style="{StaticResource InfoLabel}"/>
+                        <TextBlock Text="hoai.nguyenduc@ide-innovation.vn" Style="{StaticResource InfoValue}"/>
+
+                        <TextBlock Text="Điện thoại:" Style="{StaticResource InfoLabel}"/>
+                        <TextBlock Text="084-902129955" Style="{StaticResource InfoValue}"/>
 
                         <TextBlock Text="Website:" Style="{StaticResource InfoLabel}"/>
-                        <TextBlock Text="https://example.com" Style="{StaticResource InfoValue}"/>
+                        <TextBlock>
+                            <Hyperlink NavigateUri="https://ide-innovation.vn"
+                                      RequestNavigate="Hyperlink_RequestNavigate"
+                                      Foreground="#3498DB">
+                                <TextBlock Text="https://ide-innovation.vn"/>
+                            </Hyperlink>
+                        </TextBlock>
                     </StackPanel>
                 </Border>
 
@@ -183,7 +192,7 @@
         <!-- Footer -->
         <Border Grid.Row="2" Background="White" BorderBrush="#BDC3C7" BorderThickness="0,1,0,0" Padding="15">
             <StackPanel>
-                <TextBlock Text="© 2025 HMI Screwing Monitor. All rights reserved."
+                <TextBlock Text="© 2025 CÔNG TY TNHH SÁNG TẠO IDE VIỆT NAM. All rights reserved."
                           FontSize="10" Foreground="#7F8C8D"
                           HorizontalAlignment="Center"/>
                 <Button Content="Đóng"

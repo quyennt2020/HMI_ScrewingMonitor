@@ -17,35 +17,41 @@ namespace HMI_ScrewingMonitor.Services
         /// </summary>
         public static string GetHardwareId()
         {
-            try
+            string cpuId = GetCpuId();
+            string motherboardSerial = GetMotherboardSerial();
+            string hddSerial = GetHddSerial();
+
+            // Kiểm tra xem có lấy được ít nhất 2/3 thông tin phần cứng không
+            int validCount = 0;
+            if (cpuId != "UNKNOWN_CPU") validCount++;
+            if (motherboardSerial != "UNKNOWN_MOBO") validCount++;
+            if (hddSerial != "UNKNOWN_HDD") validCount++;
+
+            if (validCount < 2)
             {
-                string cpuId = GetCpuId();
-                string motherboardSerial = GetMotherboardSerial();
-                string hddSerial = GetHddSerial();
+                // Không đủ thông tin phần cứng → Throw exception
+                string errorMsg = $"Không thể lấy thông tin phần cứng!\n\n" +
+                                  $"CPU ID: {cpuId}\n" +
+                                  $"Motherboard: {motherboardSerial}\n" +
+                                  $"HDD Serial: {hddSerial}\n\n" +
+                                  $"Vui lòng chạy ứng dụng với quyền Administrator.";
 
-                // Kết hợp các thông tin
-                string combined = $"{cpuId}|{motherboardSerial}|{hddSerial}";
-
-                // Hash bằng SHA256
-                using (SHA256 sha256 = SHA256.Create())
-                {
-                    byte[] hashBytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(combined));
-                    string hash = BitConverter.ToString(hashBytes).Replace("-", "");
-
-                    // Lấy 32 ký tự đầu để dễ hiển thị
-                    return hash.Substring(0, 32);
-                }
+                Console.WriteLine($"[HARDWARE ERROR] {errorMsg}");
+                throw new InvalidOperationException(errorMsg);
             }
-            catch (Exception ex)
+
+            // Kết hợp các thông tin
+            string combined = $"{cpuId}|{motherboardSerial}|{hddSerial}";
+            Console.WriteLine($"[HARDWARE INFO] Combined: {combined}");
+
+            // Hash bằng SHA256
+            using (SHA256 sha256 = SHA256.Create())
             {
-                // Fallback: Sử dụng machine name + username nếu không lấy được hardware info
-                System.Diagnostics.Debug.WriteLine($"Error getting hardware ID: {ex.Message}");
-                string fallback = $"{Environment.MachineName}|{Environment.UserName}";
-                using (SHA256 sha256 = SHA256.Create())
-                {
-                    byte[] hashBytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(fallback));
-                    return BitConverter.ToString(hashBytes).Replace("-", "").Substring(0, 32);
-                }
+                byte[] hashBytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(combined));
+                string hash = BitConverter.ToString(hashBytes).Replace("-", "");
+
+                // Lấy 32 ký tự đầu để dễ hiển thị
+                return hash.Substring(0, 32);
             }
         }
 

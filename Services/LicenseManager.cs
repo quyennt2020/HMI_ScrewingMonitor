@@ -1,4 +1,3 @@
-using Microsoft.Win32;
 using System;
 using System.IO;
 using System.Security.Cryptography;
@@ -7,14 +6,11 @@ using System.Text;
 namespace HMI_ScrewingMonitor.Services
 {
     /// <summary>
-    /// Quản lý license: Load, Save, Validate, Trial period, Anti-tamper
+    /// Quản lý license: Load, Save, Validate
+    /// Trial mode: 10 phút mỗi lần chạy
     /// </summary>
     public class LicenseManager
     {
-        private const int TRIAL_DAYS = 30;
-        private const string REGISTRY_KEY_PATH = @"Software\HMI_ScrewingMonitor";
-        private const string REGISTRY_INSTALL_DATE = "InstallDate";
-        private const string REGISTRY_LAST_RUN = "LastRun";
         private const string LICENSE_FILE_NAME = "license.dat";
 
         private static readonly string AppDataFolder = Path.Combine(
@@ -24,18 +20,13 @@ namespace HMI_ScrewingMonitor.Services
 
         private static readonly string LicenseFilePath = Path.Combine(AppDataFolder, LICENSE_FILE_NAME);
 
-        // AES encryption key - Thay đổi thành giá trị riêng của bạn
-        private static readonly byte[] EncryptionKey = Encoding.UTF8.GetBytes("HMI_SCREWING_2025_KEY_32BYTES!");
+        // AES encryption key - 16 bytes (128-bit AES)
+        private static readonly byte[] EncryptionKey = Encoding.UTF8.GetBytes("HMISCREWING_2025");
 
         public string LicenseKey { get; private set; }
         public string CompanyName { get; private set; }
         public DateTime? ExpiryDate { get; private set; }
-        public DateTime FirstRunDate { get; private set; }
-        public DateTime LastRunDate { get; private set; }
         public bool IsLicensed { get; private set; }
-        public bool IsTrialExpired { get; private set; }
-        public int DaysRemaining { get; private set; }
-        public bool TamperDetected { get; private set; }
         public string HardwareId { get; private set; }
 
         public LicenseManager()
@@ -56,20 +47,6 @@ namespace HMI_ScrewingMonitor.Services
                 // Ensure app data folder exists
                 Directory.CreateDirectory(AppDataFolder);
 
-                // Load FirstRunDate và LastRunDate từ Registry
-                LoadDatesFromRegistry();
-
-                // Kiểm tra tamper (ngày bị chỉnh)
-                CheckTamper();
-
-                if (TamperDetected)
-                {
-                    IsLicensed = false;
-                    IsTrialExpired = true;
-                    DaysRemaining = 0;
-                    return;
-                }
-
                 // Load license từ file
                 LoadLicense();
 
@@ -87,119 +64,17 @@ namespace HMI_ScrewingMonitor.Services
                     {
                         CompanyName = companyName;
                         ExpiryDate = expiryDate;
-                        IsTrialExpired = false;
-                        DaysRemaining = -1; // Unlimited
-                        SaveLastRunDate();
-                        return;
                     }
                 }
-
-                // Không có license hợp lệ → Kiểm tra trial
-                var daysSinceFirstRun = (DateTime.Today - FirstRunDate).Days;
-                DaysRemaining = TRIAL_DAYS - daysSinceFirstRun;
-                IsTrialExpired = DaysRemaining <= 0;
-
-                // Lưu LastRunDate
-                SaveLastRunDate();
+                else
+                {
+                    IsLicensed = false;
+                }
             }
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"License initialization error: {ex.Message}");
-                // Fallback: Assume trial mode
                 IsLicensed = false;
-                IsTrialExpired = false;
-                DaysRemaining = TRIAL_DAYS;
-            }
-        }
-
-        /// <summary>
-        /// Load FirstRunDate và LastRunDate từ Registry
-        /// </summary>
-        private void LoadDatesFromRegistry()
-        {
-            try
-            {
-                using (RegistryKey key = Registry.CurrentUser.CreateSubKey(REGISTRY_KEY_PATH))
-                {
-                    // Load FirstRunDate
-                    object installDateValue = key.GetValue(REGISTRY_INSTALL_DATE);
-                    if (installDateValue != null)
-                    {
-                        // Decrypt
-                        string encryptedDate = installDateValue.ToString();
-                        string decryptedDate = DecryptString(encryptedDate);
-                        FirstRunDate = DateTime.Parse(decryptedDate);
-                    }
-                    else
-                    {
-                        // First time run
-                        FirstRunDate = DateTime.Today;
-                        string encryptedDate = EncryptString(FirstRunDate.ToString("yyyy-MM-dd"));
-                        key.SetValue(REGISTRY_INSTALL_DATE, encryptedDate);
-                    }
-
-                    // Load LastRunDate
-                    object lastRunValue = key.GetValue(REGISTRY_LAST_RUN);
-                    if (lastRunValue != null)
-                    {
-                        string encryptedDate = lastRunValue.ToString();
-                        string decryptedDate = DecryptString(encryptedDate);
-                        LastRunDate = DateTime.Parse(decryptedDate);
-                    }
-                    else
-                    {
-                        LastRunDate = DateTime.Today;
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"Error loading dates from registry: {ex.Message}");
-                FirstRunDate = DateTime.Today;
-                LastRunDate = DateTime.Today;
-            }
-        }
-
-        /// <summary>
-        /// Lưu LastRunDate vào Registry
-        /// </summary>
-        private void SaveLastRunDate()
-        {
-            try
-            {
-                using (RegistryKey key = Registry.CurrentUser.CreateSubKey(REGISTRY_KEY_PATH))
-                {
-                    string encryptedDate = EncryptString(DateTime.Today.ToString("yyyy-MM-dd"));
-                    key.SetValue(REGISTRY_LAST_RUN, encryptedDate);
-                }
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"Error saving last run date: {ex.Message}");
-            }
-        }
-
-        /// <summary>
-        /// Kiểm tra tamper (ngày bị chỉnh lùi)
-        /// </summary>
-        private void CheckTamper()
-        {
-            try
-            {
-                // Kiểm tra: CurrentDate < LastRunDate
-                if (DateTime.Today < LastRunDate)
-                {
-                    TamperDetected = true;
-                    System.Diagnostics.Debug.WriteLine("TAMPER DETECTED: System date rolled back!");
-                }
-                else
-                {
-                    TamperDetected = false;
-                }
-            }
-            catch
-            {
-                TamperDetected = false;
             }
         }
 
@@ -244,6 +119,10 @@ namespace HMI_ScrewingMonitor.Services
         {
             try
             {
+                Console.WriteLine($"[SAVE LICENSE] Starting save process...");
+                Console.WriteLine($"[SAVE LICENSE] License key: {licenseKey}");
+                Console.WriteLine($"[SAVE LICENSE] Hardware ID: {HardwareId}");
+
                 // Validate trước khi lưu
                 bool isValid = Services.LicenseKey.ValidateLicenseKey(
                     licenseKey,
@@ -252,27 +131,45 @@ namespace HMI_ScrewingMonitor.Services
                     out DateTime? expiryDate
                 );
 
+                Console.WriteLine($"[SAVE LICENSE] Validation result: {isValid}");
+
                 if (!isValid)
+                {
+                    Console.WriteLine($"[SAVE LICENSE] Validation failed - returning false");
                     return false;
+                }
 
                 // Lưu vào file encrypted
                 string dataToEncrypt = $"{licenseKey}|{companyName}";
+                Console.WriteLine($"[SAVE LICENSE] Data to encrypt: {dataToEncrypt}");
+
                 string encryptedData = EncryptString(dataToEncrypt);
+                Console.WriteLine($"[SAVE LICENSE] Encrypted data length: {encryptedData.Length}");
+
+                if (string.IsNullOrEmpty(encryptedData))
+                {
+                    Console.WriteLine($"[SAVE LICENSE] ERROR: Encrypted data is empty!");
+                    return false;
+                }
 
                 Directory.CreateDirectory(AppDataFolder);
+                Console.WriteLine($"[SAVE LICENSE] Writing to file: {LicenseFilePath}");
                 File.WriteAllText(LicenseFilePath, encryptedData);
+                Console.WriteLine($"[SAVE LICENSE] File written successfully");
 
                 // Update properties
                 LicenseKey = licenseKey;
                 CompanyName = companyName;
                 ExpiryDate = expiryDate;
                 IsLicensed = true;
-                IsTrialExpired = false;
 
+                Console.WriteLine($"[SAVE LICENSE] Save completed successfully!");
                 return true;
             }
             catch (Exception ex)
             {
+                Console.WriteLine($"[SAVE LICENSE] ERROR: {ex.Message}");
+                Console.WriteLine($"[SAVE LICENSE] Stack trace: {ex.StackTrace}");
                 System.Diagnostics.Debug.WriteLine($"Error saving license: {ex.Message}");
                 return false;
             }
@@ -285,10 +182,15 @@ namespace HMI_ScrewingMonitor.Services
         {
             try
             {
+                Console.WriteLine($"[ENCRYPT] Starting encryption...");
+                Console.WriteLine($"[ENCRYPT] Plain text: {plainText}");
+                Console.WriteLine($"[ENCRYPT] Encryption key length: {EncryptionKey.Length}");
+
                 using (Aes aes = Aes.Create())
                 {
                     aes.Key = EncryptionKey;
                     aes.GenerateIV();
+                    Console.WriteLine($"[ENCRYPT] AES IV length: {aes.IV.Length}");
 
                     ICryptoTransform encryptor = aes.CreateEncryptor(aes.Key, aes.IV);
 
@@ -296,20 +198,29 @@ namespace HMI_ScrewingMonitor.Services
                     {
                         // Prepend IV
                         msEncrypt.Write(aes.IV, 0, aes.IV.Length);
+                        Console.WriteLine($"[ENCRYPT] Wrote IV to stream");
 
                         using (CryptoStream csEncrypt = new CryptoStream(msEncrypt, encryptor, CryptoStreamMode.Write))
                         using (StreamWriter swEncrypt = new StreamWriter(csEncrypt))
                         {
                             swEncrypt.Write(plainText);
+                            swEncrypt.Flush();
+                            csEncrypt.FlushFinalBlock();
+                            Console.WriteLine($"[ENCRYPT] Wrote plain text and flushed");
                         }
 
                         byte[] encrypted = msEncrypt.ToArray();
-                        return Convert.ToBase64String(encrypted);
+                        Console.WriteLine($"[ENCRYPT] Encrypted bytes length: {encrypted.Length}");
+                        string result = Convert.ToBase64String(encrypted);
+                        Console.WriteLine($"[ENCRYPT] Base64 result length: {result.Length}");
+                        return result;
                     }
                 }
             }
-            catch
+            catch (Exception ex)
             {
+                Console.WriteLine($"[ENCRYPT] ERROR: {ex.Message}");
+                Console.WriteLine($"[ENCRYPT] Stack trace: {ex.StackTrace}");
                 return "";
             }
         }

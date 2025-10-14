@@ -33,42 +33,32 @@ namespace HMI_ScrewingMonitor
                 {
                     // License hợp lệ → Vào app bình thường
                     Console.WriteLine("[LICENSE] Valid license detected. Starting application...");
-                    return; // MainWindow sẽ được khởi động tự động từ App.xaml
-                }
-
-                // Kiểm tra trial
-                if (licenseManager.IsTrialExpired || licenseManager.TamperDetected)
-                {
-                    // Trial hết hạn hoặc phát hiện tamper → Bắt buộc phải activate
-                    Console.WriteLine("[LICENSE] Trial expired or tamper detected. Showing license window...");
-                    ShowLicenseWindow(licenseManager, required: true);
                 }
                 else
                 {
-                    // Đang trong trial → Cho phép sử dụng, hiển thị thông báo
-                    Console.WriteLine($"[LICENSE] Trial mode. {licenseManager.DaysRemaining} days remaining.");
-
-                    // Hiển thị thông báo trial (optional)
-                    if (licenseManager.DaysRemaining <= 7)
-                    {
-                        MessageBox.Show(
-                            $"Bạn đang sử dụng phiên bản dùng thử.\n\n" +
-                            $"Còn lại: {licenseManager.DaysRemaining} ngày\n\n" +
-                            $"Vui lòng kích hoạt phần mềm để tiếp tục sử dụng sau khi hết hạn.",
-                            "Thông báo dùng thử",
-                            MessageBoxButton.OK,
-                            MessageBoxImage.Information
-                        );
-                    }
-
-                    // Cho phép vào app
-                    return;
+                    // Trial mode - 10 phút mỗi lần chạy
+                    Console.WriteLine("[LICENSE] Trial mode - 10 minutes per session.");
+                    // MainViewModel sẽ tự động khởi động trial timer
                 }
+
+                // MainWindow sẽ được khởi động tự động từ App.xaml
+            }
+            catch (InvalidOperationException ex)
+            {
+                // Lỗi không lấy được hardware info
+                MessageBox.Show(
+                    ex.Message,
+                    "Lỗi Khởi Động",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error
+                );
+                Shutdown();
             }
             catch (Exception ex)
             {
+                // Các lỗi khác
                 MessageBox.Show(
-                    $"Lỗi kiểm tra license: {ex.Message}\n\nỨng dụng sẽ thoát.",
+                    $"Lỗi khởi động ứng dụng: {ex.Message}",
                     "Lỗi",
                     MessageBoxButton.OK,
                     MessageBoxImage.Error

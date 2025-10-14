@@ -80,12 +80,12 @@
                 Visibility="Collapsed">
             <StackPanel>
                 <TextBlock x:Name="TrialStatusText"
-                          Text="⏰ Bạn đang sử dụng phiên bản dùng thử"
+                          Text="⏰ Phiên bản dùng thử"
                           FontSize="13"
                           FontWeight="SemiBold"
                           Foreground="#856404"/>
                 <TextBlock x:Name="TrialDaysText"
-                          Text="Còn 30 ngày dùng thử"
+                          Text="Ứng dụng tự động đóng sau 10 phút"
                           FontSize="12"
                           Foreground="#856404"
                           Margin="0,5,0,0"/>

@@ -31,14 +31,9 @@ namespace HMI_ScrewingMonitor.Views
                 // Đã có license hợp lệ
                 ShowLicenseActivated();
             }
-            else if (_licenseManager.TamperDetected)
-            {
-                // Phát hiện tamper
-                ShowTamperDetected();
-            }
             else
             {
-                // Trial mode
+                // Trial mode - 10 phút mỗi lần chạy
                 ShowTrialStatus();
             }
         }
@@ -72,33 +67,7 @@ namespace HMI_ScrewingMonitor.Views
         {
             TrialStatusPanel.Visibility = Visibility.Visible;
             LicenseInfoPanel.Visibility = Visibility.Collapsed;
-
-            if (_licenseManager.IsTrialExpired)
-            {
-                TrialStatusPanel.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#F8D7DA"));
-                TrialStatusPanel.BorderBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#DC3545"));
-                TrialStatusText.Text = "❌ Phiên bản dùng thử đã hết hạn";
-                TrialStatusText.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#721C24"));
-                TrialDaysText.Text = "Vui lòng kích hoạt phần mềm để tiếp tục sử dụng";
-                TrialDaysText.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#721C24"));
-            }
-            else
-            {
-                TrialDaysText.Text = $"Còn {_licenseManager.DaysRemaining} ngày dùng thử";
-            }
-        }
-
-        private void ShowTamperDetected()
-        {
-            TrialStatusPanel.Visibility = Visibility.Visible;
-            LicenseInfoPanel.Visibility = Visibility.Collapsed;
-
-            TrialStatusPanel.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#F8D7DA"));
-            TrialStatusPanel.BorderBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#DC3545"));
-            TrialStatusText.Text = "⚠️ Phát hiện thay đổi ngày giờ hệ thống";
-            TrialStatusText.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#721C24"));
-            TrialDaysText.Text = "Vui lòng liên hệ hỗ trợ hoặc kích hoạt phần mềm";
-            TrialDaysText.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#721C24"));
+            // Text đã được set trong XAML: "Phiên bản dùng thử" và "Ứng dụng tự động đóng sau 10 phút"
         }
 
         private void CopyHardwareId_Click(object sender, RoutedEventArgs e)
@@ -171,21 +140,18 @@ namespace HMI_ScrewingMonitor.Views
 
                 if (success)
                 {
-                    ShowStatusMessage("✅ Kích hoạt thành công!", MessageType.Success);
                     ShowLicenseActivated();
 
-                    // Đóng window sau 2 giây
-                    var timer = new System.Windows.Threading.DispatcherTimer
-                    {
-                        Interval = TimeSpan.FromSeconds(2)
-                    };
-                    timer.Tick += (s, args) =>
-                    {
-                        timer.Stop();
-                        DialogResult = true;
-                        Close();
-                    };
-                    timer.Start();
+                    MessageBox.Show(
+                        "✅ Kích hoạt license thành công!\n\n" +
+                        "Vui lòng đóng và mở lại ứng dụng để áp dụng thay đổi.",
+                        "Kích hoạt thành công",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Information
+                    );
+
+                    // Đóng app để user restart thủ công
+                    Application.Current.Shutdown();
                 }
                 else
                 {
@@ -206,27 +172,8 @@ namespace HMI_ScrewingMonitor.Views
 
         private void Cancel_Click(object sender, RoutedEventArgs e)
         {
-            // Nếu đang trong trial và chưa expired, cho phép đóng
-            if (!_licenseManager.IsLicensed && _licenseManager.IsTrialExpired && !_isActivated)
-            {
-                var result = MessageBox.Show(
-                    "Phiên bản dùng thử đã hết hạn.\n\nBạn có chắc muốn thoát không? Phần mềm sẽ không khởi động.",
-                    "Xác nhận thoát",
-                    MessageBoxButton.YesNo,
-                    MessageBoxImage.Warning
-                );
-
-                if (result == MessageBoxResult.Yes)
-                {
-                    DialogResult = false;
-                    Close();
-                }
-            }
-            else
-            {
-                DialogResult = _isActivated;
-                Close();
-            }
+            DialogResult = _isActivated;
+            Close();
         }
 
         private void ShowStatusMessage(string message, MessageType type)
@@ -252,18 +199,6 @@ namespace HMI_ScrewingMonitor.Views
                     StatusMessageText.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#856404"));
                     break;
             }
-        }
-
-        protected override void OnClosing(System.ComponentModel.CancelEventArgs e)
-        {
-            // Nếu trial expired và chưa activate, không cho đóng window
-            if (!_licenseManager.IsLicensed && _licenseManager.IsTrialExpired && !_isActivated)
-            {
-                e.Cancel = true;
-                Cancel_Click(this, null);
-            }
-
-            base.OnClosing(e);
         }
 
         private enum MessageType

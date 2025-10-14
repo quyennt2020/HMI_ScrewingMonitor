@@ -1,7 +1,9 @@
 using System;
+using System.Diagnostics;
 using System.Reflection;
 using System.Windows;
 using System.Windows.Media;
+using System.Windows.Navigation;
 using HMI_ScrewingMonitor.Services;
 
 namespace HMI_ScrewingMonitor.Views
@@ -45,45 +47,27 @@ namespace HMI_ScrewingMonitor.Views
                     LicenseStatusText.Text = "✓ Đã kích hoạt";
                     LicenseStatusText.Foreground = new SolidColorBrush(Color.FromRgb(39, 174, 96));
 
-                    // Kiểm tra expiry date (nếu có)
-                    // TODO: Nếu có thông tin expiry date từ license, hiển thị ở đây
+                    // Hiển thị expiry date (nếu có)
                     ExpiryLabel.Visibility = Visibility.Visible;
                     ExpiryDateText.Visibility = Visibility.Visible;
-                    ExpiryDateText.Text = "Vĩnh viễn";
-                }
-                else if (_licenseManager.TamperDetected)
-                {
-                    // Phát hiện tamper
-                    LicenseStatusIndicator.Fill = new SolidColorBrush(Color.FromRgb(231, 76, 60)); // Red
-                    LicenseStatusText.Text = "⚠ Phát hiện hành vi gian lận";
-                    LicenseStatusText.Foreground = new SolidColorBrush(Color.FromRgb(231, 76, 60));
-
-                    TrialLabel.Visibility = Visibility.Collapsed;
-                    TrialDaysText.Visibility = Visibility.Collapsed;
-                }
-                else if (_licenseManager.IsTrialExpired)
-                {
-                    // Trial hết hạn
-                    LicenseStatusIndicator.Fill = new SolidColorBrush(Color.FromRgb(231, 76, 60)); // Red
-                    LicenseStatusText.Text = "✗ Phiên bản dùng thử đã hết hạn";
-                    LicenseStatusText.Foreground = new SolidColorBrush(Color.FromRgb(231, 76, 60));
-
-                    TrialLabel.Visibility = Visibility.Visible;
-                    TrialDaysText.Visibility = Visibility.Visible;
-                    TrialDaysText.Text = "Đã hết hạn";
-                    TrialDaysText.Foreground = new SolidColorBrush(Color.FromRgb(231, 76, 60));
+                    if (_licenseManager.ExpiryDate.HasValue)
+                    {
+                        ExpiryDateText.Text = _licenseManager.ExpiryDate.Value.ToString("dd/MM/yyyy");
+                    }
+                    else
+                    {
+                        ExpiryDateText.Text = "Vĩnh viễn";
+                    }
                 }
                 else
                 {
-                    // Trial mode
+                    // Trial mode - 10 phút mỗi lần chạy
                     LicenseStatusIndicator.Fill = new SolidColorBrush(Color.FromRgb(230, 126, 34)); // Orange
-                    LicenseStatusText.Text = "⏰ Phiên bản dùng thử";
+                    LicenseStatusText.Text = "⏰ Dùng thử - 10 phút/lần chạy";
                     LicenseStatusText.Foreground = new SolidColorBrush(Color.FromRgb(230, 126, 34));
 
-                    TrialLabel.Visibility = Visibility.Visible;
-                    TrialDaysText.Visibility = Visibility.Visible;
-                    TrialDaysText.Text = $"{_licenseManager.DaysRemaining} ngày";
-                    TrialDaysText.Foreground = new SolidColorBrush(Color.FromRgb(230, 126, 34));
+                    TrialLabel.Visibility = Visibility.Collapsed;
+                    TrialDaysText.Visibility = Visibility.Collapsed;
                 }
             }
             catch (Exception ex)
@@ -163,6 +147,31 @@ namespace HMI_ScrewingMonitor.Views
         private void Close_Click(object sender, RoutedEventArgs e)
         {
             this.Close();
+        }
+
+        /// <summary>
+        /// Mở link website trong browser
+        /// </summary>
+        private void Hyperlink_RequestNavigate(object sender, RequestNavigateEventArgs e)
+        {
+            try
+            {
+                Process.Start(new ProcessStartInfo
+                {
+                    FileName = e.Uri.AbsoluteUri,
+                    UseShellExecute = true
+                });
+                e.Handled = true;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(
+                    $"Không thể mở link: {ex.Message}",
+                    "Lỗi",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error
+                );
+            }
         }
     }
 }

@@ -20,8 +20,14 @@ namespace HMI_ScrewingMonitor.ViewModels
         private ModbusSettingsConfig _modbusSettings; // Cache the settings
         private readonly DispatcherTimer _timer;
         private readonly LoggingService _loggingService;
+        private readonly Services.LicenseManager _licenseManager;
+        private DispatcherTimer _trialTimer;
+        private int _trialSecondsRemaining;
+        private const int TRIAL_DURATION_MINUTES = 10;
         private bool _isMonitoring = false;
         private string _connectionStatus = "Chưa kết nối";
+        private string _trialTimeDisplay = "";
+        private string _trialCountdownColor = "#4CAF50"; // Green
         private int _gridColumns = 2;
         private int _gridRows = 0; // 0 = auto
         private int _dailyOKCount = 0;
@@ -96,6 +102,28 @@ namespace HMI_ScrewingMonitor.ViewModels
             }
         }
 
+        public string TrialTimeDisplay
+        {
+            get => _trialTimeDisplay;
+            set
+            {
+                _trialTimeDisplay = value;
+                OnPropertyChanged(nameof(TrialTimeDisplay));
+            }
+        }
+
+        public string TrialCountdownColor
+        {
+            get => _trialCountdownColor;
+            set
+            {
+                _trialCountdownColor = value;
+                OnPropertyChanged(nameof(TrialCountdownColor));
+            }
+        }
+
+        public bool ShowTrialCountdown => !_licenseManager?.IsLicensed ?? false;
+
         public int ConnectedDevicesCount => Devices.Count(d => d.IsConnected && d.Enabled);
         public int TotalDevices => Devices.Count(d => d.Enabled);
         public int OKCount => Devices.Sum(d => d.OKDeviceCount);  // Tổng số lần OK của tất cả thiết bị
@@ -112,6 +140,7 @@ namespace HMI_ScrewingMonitor.ViewModels
         {
             _modbusService = new ModbusService();
             _loggingService = new LoggingService();
+            _licenseManager = new Services.LicenseManager();
             Devices = new ObservableCollection<ScrewingDevice>();
 
             ConnectCommand = new RelayCommand(() => ConnectAsync());
@@ -133,6 +162,12 @@ namespace HMI_ScrewingMonitor.ViewModels
             if (DesignerProperties.GetIsInDesignMode(new DependencyObject()))
             {
                 InitializePlaceholderData();
+            }
+
+            // Start trial timer if not licensed
+            if (!_licenseManager.IsLicensed)
+            {
+                StartTrialTimer();
             }
         }
 
@@ -751,9 +786,70 @@ namespace HMI_ScrewingMonitor.ViewModels
             OnPropertyChanged(nameof(ConnectedDevicesCount));
         }
 
+        #region Trial Timer Methods
+
+        private void StartTrialTimer()
+        {
+            _trialSecondsRemaining = TRIAL_DURATION_MINUTES * 60;
+            _trialTimer = new DispatcherTimer();
+            _trialTimer.Interval = TimeSpan.FromSeconds(1);
+            _trialTimer.Tick += OnTrialTimerTick;
+            _trialTimer.Start();
+            UpdateTrialDisplay();
+        }
+
+        private void OnTrialTimerTick(object sender, EventArgs e)
+        {
+            _trialSecondsRemaining--;
+            UpdateTrialDisplay();
+
+            if (_trialSecondsRemaining <= 0)
+            {
+                _trialTimer.Stop();
+                MessageBox.Show(
+                    "Đã hết thời gian dùng thử 10 phút.\n\n" +
+                    "Vui lòng kích hoạt license để tiếp tục sử dụng phần mềm.",
+                    "Hết thời gian dùng thử",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Information
+                );
+                Application.Current.Shutdown();
+            }
+        }
+
+        private void UpdateTrialDisplay()
+        {
+            int minutes = _trialSecondsRemaining / 60;
+            int seconds = _trialSecondsRemaining % 60;
+            TrialTimeDisplay = $"Dùng thử: Còn {minutes}:{seconds:D2}";
+
+            // Đổi màu theo thời gian
+            if (_trialSecondsRemaining > 300) // > 5 phút
+            {
+                TrialCountdownColor = "#4CAF50"; // Green
+            }
+            else if (_trialSecondsRemaining > 120) // 2-5 phút
+            {
+                TrialCountdownColor = "#FF9800"; // Orange
+            }
+            else // < 2 phút
+            {
+                TrialCountdownColor = "#F44336"; // Red
+            }
+        }
+
+        private void StopTrialTimer()
+        {
+            _trialTimer?.Stop();
+            _trialTimer = null;
+        }
+
+        #endregion
+
         public void Dispose()
         {
             _timer?.Stop();
+            _trialTimer?.Stop();
             _modbusService?.Dispose();
         }
 

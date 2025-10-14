@@ -27,15 +27,15 @@ namespace LicenseGenerator
             {
                 // Chuẩn hóa input
                 hardwareId = hardwareId?.Trim().ToUpper() ?? "";
-                companyName = companyName?.Trim() ?? "CUSTOMER";
+                companyName = companyName?.Trim() ?? "Licensed Customer";
 
                 // Tạo expiry string (YYYYMMDD hoặc "99991231" nếu vĩnh viễn)
                 string expiryStr = expiryDate.HasValue
                     ? expiryDate.Value.ToString("yyyyMMdd")
                     : "99991231"; // Vĩnh viễn
 
-                // Kết hợp dữ liệu
-                string dataToSign = $"{hardwareId}|{companyName}|{expiryStr}|{SECRET_KEY}";
+                // Kết hợp dữ liệu (không dùng company name để đơn giản hóa)
+                string dataToSign = $"{hardwareId}|{expiryStr}|{SECRET_KEY}";
 
                 // Tạo signature bằng SHA256
                 using (SHA256 sha256 = SHA256.Create())

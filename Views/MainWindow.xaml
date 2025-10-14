@@ -20,6 +20,7 @@
 
             <!-- Converters -->
             <controls:TorqueHistoryConverter x:Key="TorqueHistoryConverter"/>
+            <BooleanToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
 
             <!-- Updated Styles with new color scheme -->
             <Style x:Key="HeaderStyle" TargetType="TextBlock">
@@ -402,6 +403,16 @@
                         <Run Text=" NG"/>
                     </TextBlock>
                 </StackPanel>
+            </StatusBarItem>
+            <!-- Trial Countdown (only shown when not licensed) -->
+            <Separator Visibility="{Binding ShowTrialCountdown, Converter={StaticResource BoolToVisibilityConverter}}"/>
+            <StatusBarItem Visibility="{Binding ShowTrialCountdown, Converter={StaticResource BoolToVisibilityConverter}}">
+                <Border Background="#FFF3E0" CornerRadius="3" Padding="8,2">
+                    <TextBlock Text="{Binding TrialTimeDisplay}"
+                              FontWeight="Bold"
+                              FontSize="12"
+                              Foreground="{Binding TrialCountdownColor}"/>
+                </Border>
             </StatusBarItem>
             <Separator/>
             <StatusBarItem HorizontalAlignment="Right">
