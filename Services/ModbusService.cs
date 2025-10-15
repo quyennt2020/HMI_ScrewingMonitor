@@ -410,9 +410,9 @@ namespace HMI_ScrewingMonitor.Services
                 // Time TCP connection
                 var tcpTimer = Stopwatch.StartNew();
 
-                // Use CancellationToken for connection timeout
-                using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
-                await tcpClient.ConnectAsync(device.IPAddress, device.Port).ConfigureAwait(false);
+                // Use CancellationToken for connection timeout (FIXED: Actually apply the timeout)
+                using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(2)); // Reduced to 2s for faster detection
+                await tcpClient.ConnectAsync(device.IPAddress, device.Port).WaitAsync(cts.Token).ConfigureAwait(false);
 
                 tcpTimer.Stop();
                 tcpTimeMs = tcpTimer.ElapsedMilliseconds;
