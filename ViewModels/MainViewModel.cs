@@ -718,6 +718,10 @@ namespace HMI_ScrewingMonitor.ViewModels
                         device.IsConnected = true;
                         device.LastSuccessfulRead = now;
                         device.ActualTorque = eventResult.ActualTorque;
+
+                        // Add to torque chart on every completion event
+                        device.AddRealTorqueData(eventResult.ActualTorque);
+
                         device.IsOK = eventResult.IsOK;
                         device.Status = eventResult.StatusMessage;
                         // Cập nhật TotalCount: ưu tiên từ thiết bị, nếu không có thì tự tăng

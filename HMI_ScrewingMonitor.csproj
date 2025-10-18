@@ -3,6 +3,7 @@
     <OutputType>WinExe</OutputType>
     <TargetFramework>net6.0-windows</TargetFramework>
     <UseWPF>true</UseWPF>
+    <ApplicationIcon>Resources\app_icon.ico</ApplicationIcon>
     <AssemblyTitle>HMI Screwing Monitor</AssemblyTitle>
     <AssemblyDescription>Hệ thống giám sát thiết bị vặn vít tự động qua giao thức Modbus</AssemblyDescription>
     <AssemblyVersion>1.0.0.0</AssemblyVersion>
@@ -16,6 +17,10 @@
     <PackageReference Include="NModbus" Version="3.0.72" />
     <PackageReference Include="System.IO.Ports" Version="7.0.0" />
     <PackageReference Include="System.Management" Version="7.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="Resources\app_icon.ico" />
   </ItemGroup>
 
   <!-- Exclude LicenseGenerator folder (separate console app) -->

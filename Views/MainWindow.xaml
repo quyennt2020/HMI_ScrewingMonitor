@@ -8,6 +8,7 @@
         xmlns:controls="clr-namespace:HMI_ScrewingMonitor.Controls"
         mc:Ignorable="d"
         d:DataContext="{d:DesignInstance Type=vm:MainViewModel, IsDesignTimeCreatable=True}"
+        Icon="/Resources/app_icon.ico"
         Title="HMI - Giám sát thiết bị vặn vít tự động"
         Height="800" Width="1200"
         WindowStartupLocation="CenterScreen">

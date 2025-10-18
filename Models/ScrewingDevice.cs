@@ -134,20 +134,9 @@ namespace HMI_ScrewingMonitor.Models
             get => _actualTorque;
             set
             {
-                // Only update if value actually changed
-                if (Math.Abs(_actualTorque - value) > 0.01f)
-                {
-                    _actualTorque = value;
-
-                    // Only add to chart if value > 0 (skip disconnect/error values)
-                    if (value > 0)
-                    {
-                        AddRealTorqueData(value);
-                    }
-
-                    OnPropertyChanged(nameof(ActualTorque));
-                    OnPropertyChanged(nameof(StandardRange));
-                }
+                _actualTorque = value;
+                OnPropertyChanged(nameof(ActualTorque));
+                OnPropertyChanged(nameof(StandardRange));
             }
         }
 
