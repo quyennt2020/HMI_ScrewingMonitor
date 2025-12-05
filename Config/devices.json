@@ -2,7 +2,7 @@
   "Devices": [
     {
       "DeviceId": 1,
-      "DeviceName": "M\u00E1y #1 C\u00F4ng \u0111o\u1EA1n A",
+      "DeviceName": "Máy #1 Công đoạn A",
       "DeviceModel": "Handy2000",
       "IPAddress": "127.0.0.1",
       "Port": 502,
@@ -11,7 +11,7 @@
     },
     {
       "DeviceId": 2,
-      "DeviceName": "M\u00E1y #2 C\u00F4ng \u0111o\u1EA1n B",
+      "DeviceName": "Máy #2 Công đoạn B",
       "DeviceModel": "Handy2000",
       "IPAddress": "127.0.0.2",
       "Port": 502,
@@ -20,7 +20,7 @@
     },
     {
       "DeviceId": 3,
-      "DeviceName": "M\u00E1y #3 C\u00F4ng \u0111o\u1EA1n C",
+      "DeviceName": "Máy #3 Công đoạn C",
       "DeviceModel": "Handy2000",
       "IPAddress": "127.0.0.3",
       "Port": 502,
@@ -29,7 +29,7 @@
     },
     {
       "DeviceId": 4,
-      "DeviceName": "M\u00E1y v\u1EB7n v\u00EDt #4",
+      "DeviceName": "Máy vặn vít #4",
       "DeviceModel": "Handy2000",
       "IPAddress": "127.0.0.4",
       "Port": 502,
@@ -38,7 +38,7 @@
     },
     {
       "DeviceId": 5,
-      "DeviceName": "M\u00E1y v\u1EB7n v\u00EDt #5",
+      "DeviceName": "Máy vặn vít #5",
       "DeviceModel": "Handy2000",
       "IPAddress": "127.0.0.5",
       "Port": 502,
@@ -47,7 +47,7 @@
     },
     {
       "DeviceId": 6,
-      "DeviceName": "M\u00E1y v\u1EB7n v\u00EDt #6",
+      "DeviceName": "Máy vặn vít #6",
       "DeviceModel": "Handy2000",
       "IPAddress": "127.0.0.6",
       "Port": 502,
@@ -56,7 +56,7 @@
     },
     {
       "DeviceId": 7,
-      "DeviceName": "M\u00E1y v\u1EB7n v\u00EDt #7",
+      "DeviceName": "Máy vặn vít #7",
       "DeviceModel": "Handy2000",
       "IPAddress": "127.0.0.7",
       "Port": 502,
@@ -65,7 +65,7 @@
     },
     {
       "DeviceId": 8,
-      "DeviceName": "M\u00E1y v\u1EB7n v\u00EDt #8",
+      "DeviceName": "Máy vặn vít #8",
       "DeviceModel": "Handy2000",
       "IPAddress": "127.0.0.8",
       "Port": 502,
@@ -74,7 +74,7 @@
     },
     {
       "DeviceId": 9,
-      "DeviceName": "M\u00E1y v\u1EB7n v\u00EDt #9",
+      "DeviceName": "Máy vặn vít #9",
       "DeviceModel": "Handy2000",
       "IPAddress": "127.0.0.9",
       "Port": 502,
@@ -83,7 +83,7 @@
     },
     {
       "DeviceId": 10,
-      "DeviceName": "M\u00E1y v\u1EB7n v\u00EDt #10",
+      "DeviceName": "Máy vặn vít #10",
       "DeviceModel": "Handy2000",
       "IPAddress": "127.0.0.10",
       "Port": 502,
@@ -92,7 +92,7 @@
     },
     {
       "DeviceId": 11,
-      "DeviceName": "M\u00E1y v\u1EB7n v\u00EDt #11",
+      "DeviceName": "Máy vặn vít #11",
       "DeviceModel": "Handy2000",
       "IPAddress": "192.168.1.100",
       "Port": 502,
@@ -101,7 +101,7 @@
     },
     {
       "DeviceId": 12,
-      "DeviceName": "M\u00E1y v\u1EB7n v\u00EDt #12",
+      "DeviceName": "Máy vặn vít #12",
       "DeviceModel": "Handy2000",
       "IPAddress": "192.168.1.100",
       "Port": 502,
@@ -110,7 +110,7 @@
     },
     {
       "DeviceId": 13,
-      "DeviceName": "M\u00E1y v\u1EB7n v\u00EDt #13",
+      "DeviceName": "Máy vặn vít #13",
       "DeviceModel": "Handy2000",
       "IPAddress": "192.168.1.100",
       "Port": 502,
@@ -119,7 +119,7 @@
     },
     {
       "DeviceId": 14,
-      "DeviceName": "M\u00E1y v\u1EB7n v\u00EDt #14",
+      "DeviceName": "Máy vặn vít #14",
       "DeviceModel": "Handy2000",
       "IPAddress": "127.0.0.14",
       "Port": 502,
@@ -128,7 +128,7 @@
     },
     {
       "DeviceId": 15,
-      "DeviceName": "M\u00E1y v\u1EB7n v\u00EDt #15",
+      "DeviceName": "Máy vặn vít #15",
       "DeviceModel": "Handy2000",
       "IPAddress": "127.0.0.15",
       "Port": 502,
@@ -137,7 +137,7 @@
     },
     {
       "DeviceId": 16,
-      "DeviceName": "M\u00E1y v\u1EB7n v\u00EDt #16",
+      "DeviceName": "Máy vặn vít #16",
       "DeviceModel": "Handy2000",
       "IPAddress": "127.0.0.16",
       "Port": 502,
@@ -146,7 +146,7 @@
     },
     {
       "DeviceId": 17,
-      "DeviceName": "M\u00E1y v\u1EB7n v\u00EDt #17",
+      "DeviceName": "Máy vặn vít #17",
       "DeviceModel": "Handy2000",
       "IPAddress": "192.168.1.100",
       "Port": 502,
@@ -155,7 +155,7 @@
     },
     {
       "DeviceId": 18,
-      "DeviceName": "M\u00E1y v\u1EB7n v\u00EDt #18",
+      "DeviceName": "Máy vặn vít #18",
       "DeviceModel": "Handy2000",
       "IPAddress": "192.168.1.100",
       "Port": 502,
@@ -164,7 +164,7 @@
     },
     {
       "DeviceId": 19,
-      "DeviceName": "M\u00E1y v\u1EB7n v\u00EDt #19",
+      "DeviceName": "Máy vặn vít #19",
       "DeviceModel": "Handy2000",
       "IPAddress": "192.168.1.100",
       "Port": 502,
@@ -173,7 +173,7 @@
     },
     {
       "DeviceId": 20,
-      "DeviceName": "M\u00E1y v\u1EB7n v\u00EDt #20",
+      "DeviceName": "Máy vặn vít #20",
       "DeviceModel": "Handy2000",
       "IPAddress": "192.168.1.100",
       "Port": 502,
@@ -182,7 +182,7 @@
     },
     {
       "DeviceId": 21,
-      "DeviceName": "M\u00E1y v\u1EB7n v\u00EDt #21",
+      "DeviceName": "Máy vặn vít #21",
       "DeviceModel": "Handy2000",
       "IPAddress": "192.168.1.100",
       "Port": 502,
@@ -191,7 +191,7 @@
     },
     {
       "DeviceId": 22,
-      "DeviceName": "M\u00E1y v\u1EB7n v\u00EDt #22",
+      "DeviceName": "Máy vặn vít #22",
       "DeviceModel": "Handy2000",
       "IPAddress": "192.168.1.100",
       "Port": 502,
@@ -200,7 +200,7 @@
     },
     {
       "DeviceId": 23,
-      "DeviceName": "M\u00E1y v\u1EB7n v\u00EDt #23",
+      "DeviceName": "Máy vặn vít #23",
       "DeviceModel": "Handy2000",
       "IPAddress": "192.168.1.100",
       "Port": 502,
@@ -209,7 +209,7 @@
     },
     {
       "DeviceId": 24,
-      "DeviceName": "M\u00E1y v\u1EB7n v\u00EDt #24",
+      "DeviceName": "Máy vặn vít #24",
       "DeviceModel": "Handy2000",
       "IPAddress": "192.168.1.100",
       "Port": 502,
@@ -218,7 +218,7 @@
     },
     {
       "DeviceId": 25,
-      "DeviceName": "M\u00E1y v\u1EB7n v\u00EDt #25",
+      "DeviceName": "Máy vặn vít #25",
       "DeviceModel": "Handy2000",
       "IPAddress": "192.168.1.100",
       "Port": 502,
@@ -227,7 +227,7 @@
     },
     {
       "DeviceId": 26,
-      "DeviceName": "M\u00E1y v\u1EB7n v\u00EDt #26",
+      "DeviceName": "Máy vặn vít #26",
       "DeviceModel": "Handy2000",
       "IPAddress": "192.168.1.100",
       "Port": 502,
@@ -236,7 +236,7 @@
     },
     {
       "DeviceId": 27,
-      "DeviceName": "M\u00E1y v\u1EB7n v\u00EDt #27",
+      "DeviceName": "Máy vặn vít #27",
       "DeviceModel": "Handy2000",
       "IPAddress": "192.168.1.100",
       "Port": 502,
@@ -245,7 +245,7 @@
     },
     {
       "DeviceId": 28,
-      "DeviceName": "M\u00E1y v\u1EB7n v\u00EDt #28",
+      "DeviceName": "Máy vặn vít #28",
       "DeviceModel": "Handy2000",
       "IPAddress": "192.168.1.100",
       "Port": 502,
@@ -254,7 +254,7 @@
     },
     {
       "DeviceId": 29,
-      "DeviceName": "M\u00E1y v\u1EB7n v\u00EDt #29",
+      "DeviceName": "Máy vặn vít #29",
       "DeviceModel": "Handy2000",
       "IPAddress": "192.168.1.100",
       "Port": 502,
@@ -263,7 +263,7 @@
     },
     {
       "DeviceId": 30,
-      "DeviceName": "M\u00E1y v\u1EB7n v\u00EDt #30",
+      "DeviceName": "Máy vặn vít #30",
       "DeviceModel": "Handy2000",
       "IPAddress": "127.0.0.30",
       "Port": 502,
@@ -290,8 +290,9 @@
   "UI": {
     "Theme": "Light",
     "Language": "Vietnamese",
-    "RefreshInterval": 1000,
-    "GridColumns": 5,
-    "GridRows": 4
-  }
+    "RefreshInterval": 10,
+    "GridColumns": 4,
+    "GridRows": 2
+  },
+  "ServicePassword": "admin"
 }

@@ -467,6 +467,35 @@ namespace HMI_ScrewingMonitor.ViewModels
 
         private void OpenSettings()
         {
+            // Check password
+            string configPath = "Config/devices.json";
+            string servicePassword = "123456"; // Default
+            
+            try 
+            {
+                if (File.Exists(configPath))
+                {
+                    var json = File.ReadAllText(configPath);
+                    var config = JsonSerializer.Deserialize<HMI_ScrewingMonitor.ViewModels.AppConfig>(json);
+                    if (!string.IsNullOrEmpty(config?.ServicePassword))
+                    {
+                        servicePassword = config.ServicePassword;
+                    }
+                }
+            }
+            catch { /* Ignore error, use default */ }
+
+            var passwordWindow = new HMI_ScrewingMonitor.Views.PasswordWindow();
+            passwordWindow.Owner = Application.Current.MainWindow;
+            
+            if (passwordWindow.ShowDialog() != true) return;
+            
+            if (passwordWindow.Password != servicePassword)
+            {
+                MessageBox.Show("Mật khẩu không đúng!", "Lỗi xác thực", MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
+
             var settingsViewModel = new SettingsViewModel(_modbusService);
             var settingsWindow = new HMI_ScrewingMonitor.Views.SettingsWindow(settingsViewModel);
             settingsWindow.Owner = Application.Current.MainWindow;
@@ -703,12 +732,12 @@ namespace HMI_ScrewingMonitor.ViewModels
                     // Nếu đây là một sự kiện hoàn thành (COMP vừa bật ON)
                     if (eventResult.IsCompletionEvent)
                     {
-                        // Validation: Tránh duplicate events trong 1 giây
+                        // Validation: Tránh duplicate events trong 0.2 giây (giảm từ 1.0s để bắt kịp thao tác nhanh)
                         var now = DateTime.Now;
                         if (device.LastUpdate != DateTime.MinValue &&
-                            (now - device.LastUpdate).TotalSeconds < 1.0)
+                            (now - device.LastUpdate).TotalSeconds < 0.2)
                         {
-                            Console.WriteLine($"[SKIP] Device {device.DeviceId} - Duplicate completion event detected within 1 second");
+                            Console.WriteLine($"[SKIP] Device {device.DeviceId} - Duplicate completion event detected within 0.2 second");
                             return; // Skip duplicate event
                         }
 

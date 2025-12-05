@@ -5,7 +5,7 @@ echo ================================
 echo.
 
 echo Creating standalone executable...
-dotnet publish -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true
+dotnet publish -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true
 
 if %errorlevel% neq 0 (
     echo ERROR: Publish failed

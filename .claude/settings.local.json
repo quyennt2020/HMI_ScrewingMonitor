@@ -28,7 +28,15 @@
       "Bash(dotnet add:*)",
       "Bash(copy:*)",
       "Bash(powershell:*)",
-      "Bash(cat:*)"
+      "Bash(cat:*)",
+      "Bash(git tag:*)",
+      "mcp__ide__getDiagnostics",
+      "Bash(dir /B \"bin\\Release\\net6.0-windows\\win-x64\\publish\")",
+      "Bash(tree -L 2 \"bin/Release/net6.0-windows/win-x64/publish\")",
+      "Bash(dotnet publish -c Release -r win-x64 --self-contained true)",
+      "Bash(dir /B \"bin\\Release\\net6.0-windows\\win-x64\\publish\\*_cor3.dll\")",
+      "Bash(start cmd /k \"HMI_ScrewingMonitor.exe\")",
+      "Bash(dotnet publish -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true)"
     ],
     "deny": [],
     "ask": []

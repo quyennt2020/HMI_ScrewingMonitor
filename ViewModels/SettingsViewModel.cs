@@ -237,6 +237,7 @@ namespace HMI_ScrewingMonitor.ViewModels
         public ModbusSettingsConfig ModbusSettings { get; set; } = new();
         public RegisterMappingConfig RegisterMapping { get; set; } = new();
         public UISettingsConfig UI { get; set; } = new();
+        public string ServicePassword { get; set; } = "123456";
     }
 
     public class DeviceConfig

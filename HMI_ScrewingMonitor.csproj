@@ -23,6 +23,14 @@
     <Resource Include="Resources\app_icon.ico" />
   </ItemGroup>
 
+  <!-- Include Config folder in publish output -->
+  <ItemGroup>
+    <Content Include="Config\**\*.*">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
+  </ItemGroup>
+
   <!-- Exclude LicenseGenerator folder (separate console app) -->
   <ItemGroup>
     <Compile Remove="LicenseGenerator\**" />
