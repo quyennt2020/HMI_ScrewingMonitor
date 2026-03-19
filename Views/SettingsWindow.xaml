@@ -4,49 +4,105 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d"
-        Title="Cấu hình hệ thống" Height="600" Width="800"
+        Title="Cấu hình hệ thống" Height="620" Width="820"
         WindowStartupLocation="CenterOwner" ResizeMode="CanResize">
 
     <Window.Resources>
-        <Style x:Key="TabItemStyle" TargetType="TabItem">
-            <Setter Property="FontWeight" Value="Bold"/>
-            <Setter Property="FontSize" Value="14"/>
-            <Setter Property="Padding" Value="15,8"/>
-        </Style>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="/Resources/ColorTheme.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
 
-        <Style x:Key="GroupBoxStyle" TargetType="GroupBox">
-            <Setter Property="FontWeight" Value="Bold"/>
-            <Setter Property="Margin" Value="5"/>
-            <Setter Property="Padding" Value="10"/>
-        </Style>
+            <Style x:Key="TabItemStyle" TargetType="TabItem">
+                <Setter Property="FontWeight" Value="Bold"/>
+                <Setter Property="FontSize" Value="13"/>
+                <Setter Property="Padding" Value="14,7"/>
+                <Setter Property="Foreground" Value="{StaticResource PrimaryTextColor}"/>
+            </Style>
 
-        <Style x:Key="SettingsButtonStyle" TargetType="Button">
-            <Setter Property="Padding" Value="20,8"/>
-            <Setter Property="Margin" Value="5"/>
-            <Setter Property="FontWeight" Value="Bold"/>
-            <Setter Property="Background" Value="SteelBlue"/>
-            <Setter Property="Foreground" Value="White"/>
-            <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="Cursor" Value="Hand"/>
-        </Style>
+            <Style x:Key="GroupBoxStyle" TargetType="GroupBox">
+                <Setter Property="FontWeight" Value="Bold"/>
+                <Setter Property="Margin" Value="5"/>
+                <Setter Property="Padding" Value="10"/>
+                <Setter Property="BorderBrush" Value="#DEE2E6"/>
+            </Style>
+
+            <Style x:Key="FieldLabelStyle" TargetType="Label">
+                <Setter Property="FontWeight" Value="SemiBold"/>
+                <Setter Property="Foreground" Value="{StaticResource PrimaryTextColor}"/>
+                <Setter Property="Padding" Value="0,4,0,2"/>
+            </Style>
+
+            <Style x:Key="FieldTextBoxStyle" TargetType="TextBox">
+                <Setter Property="Padding" Value="6,5"/>
+                <Setter Property="Margin" Value="0,0,0,10"/>
+                <Setter Property="BorderBrush" Value="#DEE2E6"/>
+                <Setter Property="BorderThickness" Value="1"/>
+            </Style>
+
+            <Style x:Key="SettingsButtonStyle" TargetType="Button">
+                <Setter Property="Padding" Value="20,8"/>
+                <Setter Property="Margin" Value="5"/>
+                <Setter Property="FontWeight" Value="Bold"/>
+                <Setter Property="FontSize" Value="12"/>
+                <Setter Property="Background" Value="{StaticResource ButtonPrimaryColor}"/>
+                <Setter Property="Foreground" Value="White"/>
+                <Setter Property="BorderThickness" Value="0"/>
+                <Setter Property="Cursor" Value="Hand"/>
+                <Style.Triggers>
+                    <Trigger Property="IsMouseOver" Value="True">
+                        <Setter Property="Background" Value="{StaticResource ButtonHoverColor}"/>
+                    </Trigger>
+                </Style.Triggers>
+            </Style>
+
+            <Style x:Key="SaveButtonStyle" TargetType="Button">
+                <Setter Property="Padding" Value="20,8"/>
+                <Setter Property="Margin" Value="5"/>
+                <Setter Property="FontWeight" Value="Bold"/>
+                <Setter Property="FontSize" Value="12"/>
+                <Setter Property="Background" Value="#27AE60"/>
+                <Setter Property="Foreground" Value="White"/>
+                <Setter Property="BorderThickness" Value="0"/>
+                <Setter Property="Cursor" Value="Hand"/>
+                <Style.Triggers>
+                    <Trigger Property="IsMouseOver" Value="True">
+                        <Setter Property="Background" Value="#1E8449"/>
+                    </Trigger>
+                </Style.Triggers>
+            </Style>
+        </ResourceDictionary>
     </Window.Resources>
 
-    <Grid Margin="10">
+    <Grid>
         <Grid.RowDefinitions>
-            <RowDefinition Height="*"/>
-            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="52"/>   <!-- Header bar -->
+            <RowDefinition Height="*"/>    <!-- Tab content -->
+            <RowDefinition Height="Auto"/> <!-- Action buttons -->
         </Grid.RowDefinitions>
 
-        <TabControl Grid.Row="0">
-            <!-- Tab 1: Quản lý Thiết bị -->
+        <!-- ─── Header Bar (matches main window style) ─── -->
+        <Border Grid.Row="0" Background="{StaticResource PrimaryBackground}">
+            <Grid Margin="16,0">
+                <TextBlock Text="⚙ Cấu hình hệ thống"
+                           FontSize="17" FontWeight="Bold"
+                           Foreground="White"
+                           HorizontalAlignment="Left" VerticalAlignment="Center"/>
+            </Grid>
+        </Border>
+
+        <!-- ─── Tab Content ─── -->
+        <TabControl Grid.Row="1" Margin="8,8,8,0" BorderBrush="#DEE2E6">
+
+            <!-- Tab 1: Device Management -->
             <TabItem Header="📱 Quản lý Thiết bị" Style="{StaticResource TabItemStyle}">
-                <Grid Margin="10">
+                <Grid Margin="8">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="2*"/>
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
 
-                    <!-- Device List -->
+                    <!-- Device list -->
                     <GroupBox Grid.Column="0" Header="Danh sách Thiết bị" Style="{StaticResource GroupBoxStyle}">
                         <Grid>
                             <Grid.RowDefinitions>
@@ -55,8 +111,11 @@
                             </Grid.RowDefinitions>
 
                             <DataGrid Grid.Row="0" Name="DevicesDataGrid" AutoGenerateColumns="False"
-                                     CanUserAddRows="False" CanUserDeleteRows="False"
-                                     ItemsSource="{Binding Devices}" SelectedItem="{Binding SelectedDevice}">
+                                      CanUserAddRows="False" CanUserDeleteRows="False"
+                                      ItemsSource="{Binding Devices}" SelectedItem="{Binding SelectedDevice}"
+                                      BorderBrush="#DEE2E6" GridLinesVisibility="Horizontal"
+                                      HorizontalGridLinesBrush="#F0F0F0"
+                                      RowHeight="30" FontSize="12">
                                 <DataGrid.Columns>
                                     <DataGridTextColumn Header="ID" Binding="{Binding DeviceId}" Width="40"/>
                                     <DataGridTextColumn Header="Tên Thiết bị" Binding="{Binding DeviceName}" Width="130"/>
@@ -68,80 +127,86 @@
                                 </DataGrid.Columns>
                             </DataGrid>
 
-                            <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,10">
+                            <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,8">
                                 <Button Content="➕ Thêm" Command="{Binding AddDeviceCommand}"
-                                       Style="{StaticResource SettingsButtonStyle}"/>
+                                        Style="{StaticResource SettingsButtonStyle}"/>
                                 <Button Content="✏️ Sửa" Command="{Binding EditDeviceCommand}"
-                                       Style="{StaticResource SettingsButtonStyle}"/>
+                                        Style="{StaticResource SettingsButtonStyle}"/>
                                 <Button Content="🗑️ Xóa" Command="{Binding DeleteDeviceCommand}"
-                                       Style="{StaticResource SettingsButtonStyle}"/>
+                                        Style="{StaticResource SettingsButtonStyle}"/>
                             </StackPanel>
                         </Grid>
                     </GroupBox>
 
-                    <!-- Device Details -->
+                    <!-- Device details panel -->
                     <GroupBox Grid.Column="1" Header="Chi tiết Thiết bị" Style="{StaticResource GroupBoxStyle}">
-                        <StackPanel DataContext="{Binding SelectedDevice}">
-                            <Label Content="ID Thiết bị:"/>
-                            <TextBox Text="{Binding DeviceId}" Margin="0,0,0,10"/>
+                        <ScrollViewer VerticalScrollBarVisibility="Auto">
+                            <StackPanel DataContext="{Binding SelectedDevice}" Margin="2">
+                                <Label Content="ID Thiết bị:" Style="{StaticResource FieldLabelStyle}"/>
+                                <TextBox Text="{Binding DeviceId}" Style="{StaticResource FieldTextBoxStyle}"/>
 
-                            <Label Content="Tên Thiết bị:"/>
-                            <TextBox Text="{Binding DeviceName}" Margin="0,0,0,10"/>
+                                <Label Content="Tên Thiết bị:" Style="{StaticResource FieldLabelStyle}"/>
+                                <TextBox Text="{Binding DeviceName}" Style="{StaticResource FieldTextBoxStyle}"/>
 
-                            <Label Content="IP Address:"/>
-                            <TextBox Text="{Binding IPAddress}" Margin="0,0,0,10"/>
+                                <Label Content="IP Address:" Style="{StaticResource FieldLabelStyle}"/>
+                                <TextBox Text="{Binding IPAddress}" Style="{StaticResource FieldTextBoxStyle}"/>
 
-                            <Label Content="Port:"/>
-                            <TextBox Text="{Binding Port}" Margin="0,0,0,10"/>
+                                <Label Content="Port:" Style="{StaticResource FieldLabelStyle}"/>
+                                <TextBox Text="{Binding Port}" Style="{StaticResource FieldTextBoxStyle}"/>
 
-                            <Label Content="Slave ID:"/>
-                            <TextBox Text="{Binding SlaveId}" Margin="0,0,0,10"/>
+                                <Label Content="Slave ID:" Style="{StaticResource FieldLabelStyle}"/>
+                                <TextBox Text="{Binding SlaveId}" Style="{StaticResource FieldTextBoxStyle}"/>
 
-                            <Label Content="Mô hình thiết bị:"/>
-                            <TextBox Text="{Binding DeviceModel}" Margin="0,0,0,10"/>
+                                <Label Content="Mô hình thiết bị:" Style="{StaticResource FieldLabelStyle}"/>
+                                <TextBox Text="{Binding DeviceModel}" Style="{StaticResource FieldTextBoxStyle}"/>
 
-                            <CheckBox Content="Kích hoạt thiết bị" IsChecked="{Binding Enabled}" Margin="0,10"/>
+                                <CheckBox Content="Kích hoạt thiết bị" IsChecked="{Binding Enabled}" Margin="0,8"/>
 
-                            <TextBlock TextWrapping="Wrap" Margin="0,20,0,0" Foreground="DarkBlue">
-                                <Run Text="ℹ️ Lưu ý:" FontWeight="Bold"/>
-                                <LineBreak/>
-                                <Run Text="• Lực xiết (Min/Max/Target) được đọc trực tiếp từ thiết bị"/>
-                                <LineBreak/>
-                                <Run Text="• Số liệu OK/NG tự động đếm, không cần cấu hình"/>
-                            </TextBlock>
-                        </StackPanel>
+                                <Border Background="#EBF5FB" CornerRadius="4" Padding="10" Margin="0,12,0,0"
+                                        BorderBrush="#AED6F1" BorderThickness="1">
+                                    <TextBlock TextWrapping="Wrap" FontSize="11">
+                                        <Run Text="ℹ️ Lưu ý:" FontWeight="Bold" Foreground="#1A5276"/>
+                                        <LineBreak/>
+                                        <Run Text="• Lực xiết (Min/Max/Target) được đọc trực tiếp từ thiết bị" Foreground="#1A5276"/>
+                                        <LineBreak/>
+                                        <Run Text="• Số liệu OK/NG tự động đếm, không cần cấu hình" Foreground="#1A5276"/>
+                                    </TextBlock>
+                                </Border>
+                            </StackPanel>
+                        </ScrollViewer>
                     </GroupBox>
                 </Grid>
             </TabItem>
 
-            <!-- Tab 2: Cấu hình Modbus -->
+            <!-- Tab 2: Connection Settings -->
             <TabItem Header="🔧 Cấu hình Kết nối" Style="{StaticResource TabItemStyle}">
                 <GroupBox Header="Cài đặt Kết nối Modbus TCP/IP" Style="{StaticResource GroupBoxStyle}" Margin="10">
                     <StackPanel>
-                        <TextBlock TextWrapping="Wrap" Margin="0,0,0,15" Foreground="DarkBlue">
-                            <Run Text="ℹ️ Hệ thống chỉ hỗ trợ kết nối Modbus TCP/IP (Individual)" FontWeight="Bold"/>
-                            <LineBreak/>
-                            <Run Text="Mỗi thiết bị có địa chỉ IP riêng và cổng Modbus 502"/>
-                        </TextBlock>
+                        <Border Background="#EBF5FB" CornerRadius="4" Padding="12,10" Margin="0,0,0,16"
+                                BorderBrush="#AED6F1" BorderThickness="1">
+                            <TextBlock TextWrapping="Wrap" FontSize="12">
+                                <Run Text="ℹ️ Hệ thống hỗ trợ kết nối Modbus TCP/IP (Individual)" FontWeight="Bold" Foreground="#1A5276"/>
+                                <LineBreak/>
+                                <Run Text="Mỗi thiết bị có địa chỉ IP riêng và cổng Modbus 502." Foreground="#1A5276"/>
+                            </TextBlock>
+                        </Border>
 
-                        <Separator Margin="0,10"/>
+                        <Label Content="Timeout kết nối (ms):" Style="{StaticResource FieldLabelStyle}"/>
+                        <TextBox Text="{Binding ModbusSettings.Timeout}" Style="{StaticResource FieldTextBoxStyle}"/>
 
-                        <Label Content="Timeout kết nối (ms):" FontWeight="Bold"/>
-                        <TextBox Text="{Binding ModbusSettings.Timeout}" Margin="0,0,0,10"/>
+                        <Label Content="Số lần thử lại khi lỗi:" Style="{StaticResource FieldLabelStyle}"/>
+                        <TextBox Text="{Binding ModbusSettings.RetryCount}" Style="{StaticResource FieldTextBoxStyle}"/>
 
-                        <Label Content="Số lần thử lại khi lỗi:" FontWeight="Bold"/>
-                        <TextBox Text="{Binding ModbusSettings.RetryCount}" Margin="0,0,0,10"/>
+                        <Label Content="Tần suất quét tín hiệu (ms):" Style="{StaticResource FieldLabelStyle}"/>
+                        <TextBox Text="{Binding ModbusSettings.ScanInterval}" Style="{StaticResource FieldTextBoxStyle}"/>
 
-                        <Label Content="Tần suất quét tín hiệu (ms):" FontWeight="Bold"/>
-                        <TextBox Text="{Binding ModbusSettings.ScanInterval}" Margin="0,0,0,10"/>
+                        <Separator Margin="0,8"/>
 
-                        <Separator Margin="0,15"/>
-
-                        <Label Content="Ghi log kết nối:" FontWeight="Bold"/>
                         <CheckBox Content="Bật ghi log kết nối Modbus (Connection Log)"
-                                 IsChecked="{Binding ModbusSettings.EnableConnectionLogging}"
-                                 Margin="0,5,0,5"/>
-                        <TextBlock TextWrapping="Wrap" Margin="5,0,0,0" Foreground="Gray" FontStyle="Italic">
+                                  IsChecked="{Binding ModbusSettings.EnableConnectionLogging}"
+                                  FontWeight="SemiBold" Margin="0,4,0,6"/>
+                        <TextBlock TextWrapping="Wrap" Margin="18,0,0,0" Foreground="{StaticResource SecondaryTextColor}"
+                                   FontStyle="Italic" FontSize="11">
                             <Run Text="Ghi chi tiết quá trình kết nối vào thư mục ConnectionLogs/ để debug."/>
                             <LineBreak/>
                             <Run Text="Log bao gồm: thời gian kết nối, thành công/thất bại, lỗi chi tiết."/>
@@ -150,31 +215,33 @@
                 </GroupBox>
             </TabItem>
 
-            <!-- Tab 3: Giao diện -->
+            <!-- Tab 3: UI Settings -->
             <TabItem Header="🎨 Giao diện" Style="{StaticResource TabItemStyle}">
                 <Grid Margin="10">
                     <GroupBox Header="Cài đặt Giao diện" Style="{StaticResource GroupBoxStyle}">
                         <StackPanel>
-                            <Label Content="Theme:"/>
-                            <ComboBox SelectedValue="{Binding UISettings.Theme}" SelectedValuePath="Content" Margin="0,0,0,15">
+                            <Label Content="Theme:" Style="{StaticResource FieldLabelStyle}"/>
+                            <ComboBox SelectedValue="{Binding UISettings.Theme}" SelectedValuePath="Content"
+                                      Margin="0,0,0,14" Padding="6,5">
                                 <ComboBoxItem Content="Light"/>
                                 <ComboBoxItem Content="Dark"/>
                             </ComboBox>
 
-                            <Label Content="Ngôn ngữ:"/>
-                            <ComboBox SelectedValue="{Binding UISettings.Language}" SelectedValuePath="Content" Margin="0,0,0,15">
+                            <Label Content="Ngôn ngữ:" Style="{StaticResource FieldLabelStyle}"/>
+                            <ComboBox SelectedValue="{Binding UISettings.Language}" SelectedValuePath="Content"
+                                      Margin="0,0,0,14" Padding="6,5">
                                 <ComboBoxItem Content="Vietnamese"/>
                                 <ComboBoxItem Content="English"/>
                             </ComboBox>
 
-                            <Label Content="Tần suất làm mới UI (ms):"/>
-                            <TextBox Text="{Binding UISettings.RefreshInterval}" Margin="0,0,0,15"/>
+                            <Label Content="Tần suất làm mới UI (ms):" Style="{StaticResource FieldLabelStyle}"/>
+                            <TextBox Text="{Binding UISettings.RefreshInterval}" Style="{StaticResource FieldTextBoxStyle}"/>
 
-                            <Label Content="Số cột hiển thị:"/>
-                            <TextBox Text="{Binding UISettings.GridColumns}" Margin="0,0,0,10"/>
+                            <Label Content="Số cột hiển thị:" Style="{StaticResource FieldLabelStyle}"/>
+                            <TextBox Text="{Binding UISettings.GridColumns}" Style="{StaticResource FieldTextBoxStyle}"/>
 
-                            <Label Content="Số hàng hiển thị (0 = tự động):"/>
-                            <TextBox Text="{Binding UISettings.GridRows}" Margin="0,0,0,15"/>
+                            <Label Content="Số hàng hiển thị (0 = tự động):" Style="{StaticResource FieldLabelStyle}"/>
+                            <TextBox Text="{Binding UISettings.GridRows}" Style="{StaticResource FieldTextBoxStyle}"/>
                         </StackPanel>
                     </GroupBox>
                 </Grid>
@@ -203,17 +270,21 @@
                                 <RowDefinition Height="Auto"/>
                             </Grid.RowDefinitions>
 
-                            <Label Grid.Row="0" Grid.Column="0" Content="BUSY Register:" FontWeight="Bold"/>
-                            <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding RegisterMapping.BUSYRegister}" Margin="5"/>
+                            <Label Grid.Row="0" Grid.Column="0" Content="BUSY Register:" Style="{StaticResource FieldLabelStyle}"/>
+                            <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding RegisterMapping.BUSYRegister}"
+                                     Style="{StaticResource FieldTextBoxStyle}" Margin="5,0,0,8"/>
 
-                            <Label Grid.Row="1" Grid.Column="0" Content="COMP Register:" FontWeight="Bold"/>
-                            <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding RegisterMapping.COMPRegister}" Margin="5"/>
+                            <Label Grid.Row="1" Grid.Column="0" Content="COMP Register:" Style="{StaticResource FieldLabelStyle}"/>
+                            <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding RegisterMapping.COMPRegister}"
+                                     Style="{StaticResource FieldTextBoxStyle}" Margin="5,0,0,8"/>
 
-                            <Label Grid.Row="2" Grid.Column="0" Content="OK Register:" FontWeight="Bold"/>
-                            <TextBox Grid.Row="2" Grid.Column="1" Text="{Binding RegisterMapping.OKRegister}" Margin="5"/>
+                            <Label Grid.Row="2" Grid.Column="0" Content="OK Register:" Style="{StaticResource FieldLabelStyle}"/>
+                            <TextBox Grid.Row="2" Grid.Column="1" Text="{Binding RegisterMapping.OKRegister}"
+                                     Style="{StaticResource FieldTextBoxStyle}" Margin="5,0,0,8"/>
 
-                            <Label Grid.Row="3" Grid.Column="0" Content="NG Register:" FontWeight="Bold"/>
-                            <TextBox Grid.Row="3" Grid.Column="1" Text="{Binding RegisterMapping.NGRegister}" Margin="5"/>
+                            <Label Grid.Row="3" Grid.Column="0" Content="NG Register:" Style="{StaticResource FieldLabelStyle}"/>
+                            <TextBox Grid.Row="3" Grid.Column="1" Text="{Binding RegisterMapping.NGRegister}"
+                                     Style="{StaticResource FieldTextBoxStyle}" Margin="5,0,0,8"/>
                         </Grid>
                     </GroupBox>
 
@@ -231,23 +302,27 @@
                                 <RowDefinition Height="Auto"/>
                             </Grid.RowDefinitions>
 
-                            <Label Grid.Row="0" Grid.Column="0" Content="Final Torque:" FontWeight="Bold"/>
-                            <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding RegisterMapping.LastFastenFinalTorque}" Margin="5"/>
+                            <Label Grid.Row="0" Grid.Column="0" Content="Final Torque:" Style="{StaticResource FieldLabelStyle}"/>
+                            <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding RegisterMapping.LastFastenFinalTorque}"
+                                     Style="{StaticResource FieldTextBoxStyle}" Margin="5,0,0,8"/>
 
-                            <Label Grid.Row="1" Grid.Column="0" Content="Target Torque:" FontWeight="Bold"/>
-                            <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding RegisterMapping.LastFastenTargetTorque}" Margin="5"/>
+                            <Label Grid.Row="1" Grid.Column="0" Content="Target Torque:" Style="{StaticResource FieldLabelStyle}"/>
+                            <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding RegisterMapping.LastFastenTargetTorque}"
+                                     Style="{StaticResource FieldTextBoxStyle}" Margin="5,0,0,8"/>
 
-                            <Label Grid.Row="2" Grid.Column="0" Content="Min Torque:" FontWeight="Bold"/>
-                            <TextBox Grid.Row="2" Grid.Column="1" Text="{Binding RegisterMapping.LastFastenMinTorque}" Margin="5"/>
+                            <Label Grid.Row="2" Grid.Column="0" Content="Min Torque:" Style="{StaticResource FieldLabelStyle}"/>
+                            <TextBox Grid.Row="2" Grid.Column="1" Text="{Binding RegisterMapping.LastFastenMinTorque}"
+                                     Style="{StaticResource FieldTextBoxStyle}" Margin="5,0,0,8"/>
 
-                            <Label Grid.Row="3" Grid.Column="0" Content="Max Torque:" FontWeight="Bold"/>
-                            <TextBox Grid.Row="3" Grid.Column="1" Text="{Binding RegisterMapping.LastFastenMaxTorque}" Margin="5"/>
+                            <Label Grid.Row="3" Grid.Column="0" Content="Max Torque:" Style="{StaticResource FieldLabelStyle}"/>
+                            <TextBox Grid.Row="3" Grid.Column="1" Text="{Binding RegisterMapping.LastFastenMaxTorque}"
+                                     Style="{StaticResource FieldTextBoxStyle}" Margin="5,0,0,8"/>
                         </Grid>
                     </GroupBox>
 
                     <!-- Help Text -->
                     <GroupBox Grid.Row="2" Header="Ghi chú" Style="{StaticResource GroupBoxStyle}">
-                        <TextBlock TextWrapping="Wrap" Margin="5">
+                        <TextBlock TextWrapping="Wrap" Margin="5" FontSize="12">
                             <Run Text="• Input Status Registers: Tín hiệu điều khiển từ thiết bị Handy2000" FontWeight="Bold"/>
                             <LineBreak/>
                             <Run Text="  - BUSY: Thiết bị đang hoạt động"/>
@@ -262,18 +337,21 @@
                             <LineBreak/>
                             <Run Text="  - Target/Min/Max: Giá trị cài đặt"/>
                             <LineBreak/><LineBreak/>
-                            <Run Text="⚠️ Lưu ý: Thay đổi cấu hình sẽ có hiệu lực sau khi restart ứng dụng." Foreground="Red" FontWeight="Bold"/>
+                            <Run Text="⚠️ Lưu ý: Thay đổi cấu hình sẽ có hiệu lực sau khi restart ứng dụng."
+                                 Foreground="{StaticResource ErrorColor}" FontWeight="Bold"/>
                         </TextBlock>
                     </GroupBox>
                 </Grid>
             </TabItem>
         </TabControl>
 
-        <!-- Buttons -->
-        <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,10,0,0">
-            <Button Content="💾 Lưu" Command="{Binding SaveCommand}" Style="{StaticResource SettingsButtonStyle}"/>
-            <Button Content="🔄 Tải lại" Command="{Binding ReloadCommand}" Style="{StaticResource SettingsButtonStyle}"/>
-            <Button Content="❌ Hủy" Command="{Binding CancelCommand}" Style="{StaticResource SettingsButtonStyle}"/>
-        </StackPanel>
+        <!-- ─── Action Buttons ─── -->
+        <Border Grid.Row="2" Background="#F8F9FA" BorderBrush="#DEE2E6" BorderThickness="0,1,0,0" Padding="10,8">
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                <Button Content="💾 Lưu" Command="{Binding SaveCommand}" Style="{StaticResource SaveButtonStyle}"/>
+                <Button Content="🔄 Tải lại" Command="{Binding ReloadCommand}" Style="{StaticResource SettingsButtonStyle}"/>
+                <Button Content="✕ Hủy" Command="{Binding CancelCommand}" Style="{StaticResource SettingsButtonStyle}"/>
+            </StackPanel>
+        </Border>
     </Grid>
 </Window>

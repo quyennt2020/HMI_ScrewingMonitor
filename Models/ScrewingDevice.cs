@@ -201,6 +201,7 @@ namespace HMI_ScrewingMonitor.Models
             {
                 _totalCount = value;
                 OnPropertyChanged(nameof(TotalCount));
+                OnPropertyChanged(nameof(PassRate));
             }
         }
 
@@ -211,6 +212,7 @@ namespace HMI_ScrewingMonitor.Models
             {
                 _okCount = value;
                 OnPropertyChanged(nameof(OKDeviceCount));
+                OnPropertyChanged(nameof(PassRate));
             }
         }
 
@@ -234,6 +236,7 @@ namespace HMI_ScrewingMonitor.Models
         public string ResultColor => !IsConnected ? "Gray" : (IsOK ? "Green" : "Red");
         public string StatusColor => IsConnected ? "Green" : "Red";
         public string StandardRange => $"{MinTorque:F2}~{MaxTorque:F2}";
+        public string PassRate => TotalCount > 0 ? $"{(int)(OKDeviceCount * 100.0 / TotalCount)}%" : "--";
 
         // Device Status Visual Indicators
         public string DeviceStatusText

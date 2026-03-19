@@ -11,6 +11,7 @@
         Icon="/Resources/app_icon.ico"
         Title="HMI - Giám sát thiết bị vặn vít tự động"
         Height="800" Width="1200"
+        MinHeight="600" MinWidth="900"
         WindowStartupLocation="CenterScreen">
 
     <Window.Resources>
@@ -23,101 +24,176 @@
             <controls:TorqueHistoryConverter x:Key="TorqueHistoryConverter"/>
             <BooleanToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
 
-            <!-- Updated Styles with new color scheme -->
             <Style x:Key="HeaderStyle" TargetType="TextBlock">
-            <Setter Property="FontSize" Value="16"/>
-            <Setter Property="FontWeight" Value="Bold"/>
-            <Setter Property="Foreground" Value="{StaticResource WhiteTextColor}"/>
-            <Setter Property="HorizontalAlignment" Value="Center"/>
-            <Setter Property="VerticalAlignment" Value="Center"/>
-        </Style>
+                <Setter Property="FontSize" Value="15"/>
+                <Setter Property="FontWeight" Value="Bold"/>
+                <Setter Property="Foreground" Value="{StaticResource WhiteTextColor}"/>
+                <Setter Property="HorizontalAlignment" Value="Center"/>
+                <Setter Property="VerticalAlignment" Value="Center"/>
+            </Style>
 
-        <Style x:Key="StatusTextStyle" TargetType="TextBlock">
-            <Setter Property="FontSize" Value="24"/>
-            <Setter Property="FontWeight" Value="Bold"/>
-            <Setter Property="HorizontalAlignment" Value="Center"/>
-            <Setter Property="VerticalAlignment" Value="Center"/>
-            <Setter Property="Foreground" Value="{StaticResource WhiteTextColor}"/>
-        </Style>
+            <!-- Base control button -->
+            <Style x:Key="ControlButtonStyle" TargetType="Button">
+                <Setter Property="FontSize" Value="12"/>
+                <Setter Property="FontWeight" Value="Bold"/>
+                <Setter Property="Padding" Value="14,7"/>
+                <Setter Property="Margin" Value="3,0"/>
+                <Setter Property="Background" Value="{StaticResource ButtonPrimaryColor}"/>
+                <Setter Property="Foreground" Value="{StaticResource WhiteTextColor}"/>
+                <Setter Property="BorderThickness" Value="0"/>
+                <Setter Property="Cursor" Value="Hand"/>
+                <Style.Triggers>
+                    <Trigger Property="IsMouseOver" Value="True">
+                        <Setter Property="Background" Value="{StaticResource ButtonHoverColor}"/>
+                    </Trigger>
+                    <Trigger Property="IsEnabled" Value="False">
+                        <Setter Property="Background" Value="{StaticResource ButtonDisabledColor}"/>
+                        <Setter Property="Foreground" Value="{StaticResource SecondaryTextColor}"/>
+                        <Setter Property="Cursor" Value="Arrow"/>
+                    </Trigger>
+                </Style.Triggers>
+            </Style>
 
-        <Style x:Key="ValueTextStyle" TargetType="TextBlock">
-            <Setter Property="FontSize" Value="14"/>
-            <Setter Property="FontWeight" Value="Bold"/>
-            <Setter Property="HorizontalAlignment" Value="Center"/>
-            <Setter Property="VerticalAlignment" Value="Center"/>
-            <Setter Property="Foreground" Value="{StaticResource PrimaryTextColor}"/>
-        </Style>
+            <!-- Green button for connect / start monitoring -->
+            <Style x:Key="SuccessButtonStyle" TargetType="Button">
+                <Setter Property="FontSize" Value="12"/>
+                <Setter Property="FontWeight" Value="Bold"/>
+                <Setter Property="Padding" Value="14,7"/>
+                <Setter Property="Margin" Value="3,0"/>
+                <Setter Property="Background" Value="#27AE60"/>
+                <Setter Property="Foreground" Value="{StaticResource WhiteTextColor}"/>
+                <Setter Property="BorderThickness" Value="0"/>
+                <Setter Property="Cursor" Value="Hand"/>
+                <Style.Triggers>
+                    <Trigger Property="IsMouseOver" Value="True">
+                        <Setter Property="Background" Value="#1E8449"/>
+                    </Trigger>
+                    <Trigger Property="IsEnabled" Value="False">
+                        <Setter Property="Background" Value="{StaticResource ButtonDisabledColor}"/>
+                        <Setter Property="Foreground" Value="{StaticResource SecondaryTextColor}"/>
+                        <Setter Property="Cursor" Value="Arrow"/>
+                    </Trigger>
+                </Style.Triggers>
+            </Style>
 
-        <Style x:Key="ControlButtonStyle" TargetType="Button">
-            <Setter Property="FontSize" Value="12"/>
-            <Setter Property="FontWeight" Value="Bold"/>
-            <Setter Property="Padding" Value="15,8"/>
-            <Setter Property="Margin" Value="5"/>
-            <Setter Property="Background" Value="{StaticResource ButtonPrimaryColor}"/>
-            <Setter Property="Foreground" Value="{StaticResource WhiteTextColor}"/>
-            <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="Cursor" Value="Hand"/>
-            <Style.Triggers>
-                <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="Background" Value="{StaticResource ButtonHoverColor}"/>
-                </Trigger>
-                <Trigger Property="IsEnabled" Value="False">
-                    <Setter Property="Background" Value="{StaticResource ButtonDisabledColor}"/>
-                    <Setter Property="Foreground" Value="{StaticResource SecondaryTextColor}"/>
-                    <Setter Property="Cursor" Value="Arrow"/>
-                </Trigger>
-            </Style.Triggers>
-        </Style>
+            <!-- Red button for disconnect / stop monitoring -->
+            <Style x:Key="DangerButtonStyle" TargetType="Button">
+                <Setter Property="FontSize" Value="12"/>
+                <Setter Property="FontWeight" Value="Bold"/>
+                <Setter Property="Padding" Value="14,7"/>
+                <Setter Property="Margin" Value="3,0"/>
+                <Setter Property="Background" Value="#E74C3C"/>
+                <Setter Property="Foreground" Value="{StaticResource WhiteTextColor}"/>
+                <Setter Property="BorderThickness" Value="0"/>
+                <Setter Property="Cursor" Value="Hand"/>
+                <Style.Triggers>
+                    <Trigger Property="IsMouseOver" Value="True">
+                        <Setter Property="Background" Value="#C0392B"/>
+                    </Trigger>
+                    <Trigger Property="IsEnabled" Value="False">
+                        <Setter Property="Background" Value="{StaticResource ButtonDisabledColor}"/>
+                        <Setter Property="Foreground" Value="{StaticResource SecondaryTextColor}"/>
+                        <Setter Property="Cursor" Value="Arrow"/>
+                    </Trigger>
+                </Style.Triggers>
+            </Style>
         </ResourceDictionary>
     </Window.Resources>
 
     <Grid Background="{StaticResource LightBackground}">
         <Grid.RowDefinitions>
-            <RowDefinition Height="70"/>
+            <RowDefinition Height="65"/>
             <RowDefinition Height="*"/>
-            <RowDefinition Height="35"/>
+            <RowDefinition Height="32"/>
         </Grid.RowDefinitions>
 
-        <!-- Control Panel -->
-        <Border Grid.Row="0" Background="{StaticResource PrimaryBackground}" Padding="10">
-            <Grid>
+        <!-- ═══════════════════════════════════════════════════════════
+             CONTROL PANEL
+             ═══════════════════════════════════════════════════════════ -->
+        <Border Grid.Row="0" Background="{StaticResource PrimaryBackground}">
+            <Grid Margin="12,0">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
-                
-                <StackPanel Grid.Column="0" Orientation="Horizontal" HorizontalAlignment="Left">
-                    <Button Content="🔗 Kết nối" Command="{Binding ConnectCommand}"
-                           IsEnabled="{Binding CanConnect}"
-                           Style="{StaticResource ControlButtonStyle}"/>
-                    <Button Content="❌ Ngắt kết nối" Command="{Binding DisconnectCommand}"
-                           IsEnabled="{Binding CanDisconnect}"
-                           Style="{StaticResource ControlButtonStyle}"/>
-                    <Button Content="▶️ Bắt đầu giám sát" Command="{Binding StartMonitoringCommand}"
-                           IsEnabled="{Binding CanStartMonitoring}"
-                           Style="{StaticResource ControlButtonStyle}"/>
-                    <Button Content="⏹️ Dừng giám sát" Command="{Binding StopMonitoringCommand}"
-                           IsEnabled="{Binding CanStopMonitoring}"
-                           Style="{StaticResource ControlButtonStyle}"/>
-                    <Button Content="⚙️ Cấu hình" Command="{Binding OpenSettingsCommand}"
-                           Style="{StaticResource ControlButtonStyle}"/>
-                    <Button Content="ℹ️ Giới thiệu" Command="{Binding OpenAboutCommand}"
-                           Style="{StaticResource ControlButtonStyle}"/>
-                </StackPanel>
-                
-                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                    <Border Background="{StaticResource SecondaryBackground}" CornerRadius="5" Padding="15,8" Margin="5,0">
+
+                <!-- Button groups -->
+                <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+
+                    <!-- Group 1: Connection -->
+                    <Border Background="#2C3E50" CornerRadius="6" Padding="6,4" Margin="0,0,8,0">
                         <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="Trạng thái:" Foreground="{StaticResource WhiteTextColor}" FontWeight="Bold"/>
-                            <TextBlock Text="{Binding ConnectionStatus}" Margin="10,0"
-                                     Foreground="{StaticResource WarningColor}" FontWeight="Bold"/>
+                            <Button Content="🔗 Kết nối" Command="{Binding ConnectCommand}"
+                                    IsEnabled="{Binding CanConnect}"
+                                    Style="{StaticResource SuccessButtonStyle}"/>
+                            <Button Content="✕ Ngắt kết nối" Command="{Binding DisconnectCommand}"
+                                    IsEnabled="{Binding CanDisconnect}"
+                                    Style="{StaticResource DangerButtonStyle}"/>
                         </StackPanel>
                     </Border>
-                    
-                    <Border Background="{StaticResource SecondaryBackground}" CornerRadius="5" Padding="15,8" Margin="5,0">
+
+                    <!-- Group 2: Monitoring -->
+                    <Border Background="#2C3E50" CornerRadius="6" Padding="6,4" Margin="0,0,8,0">
                         <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="Giám sát:" Foreground="{StaticResource WhiteTextColor}" FontWeight="Bold"/>
-                            <TextBlock Margin="10,0" FontWeight="Bold">
+                            <Button Content="▶ Bắt đầu giám sát" Command="{Binding StartMonitoringCommand}"
+                                    IsEnabled="{Binding CanStartMonitoring}"
+                                    Style="{StaticResource SuccessButtonStyle}"/>
+                            <Button Content="■ Dừng giám sát" Command="{Binding StopMonitoringCommand}"
+                                    IsEnabled="{Binding CanStopMonitoring}"
+                                    Style="{StaticResource DangerButtonStyle}"/>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Group 3: App controls -->
+                    <Border Background="#2C3E50" CornerRadius="6" Padding="6,4">
+                        <StackPanel Orientation="Horizontal">
+                            <Button Content="⚙ Cấu hình" Command="{Binding OpenSettingsCommand}"
+                                    Style="{StaticResource ControlButtonStyle}"/>
+                            <Button Content="ℹ Giới thiệu" Command="{Binding OpenAboutCommand}"
+                                    Style="{StaticResource ControlButtonStyle}"/>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+
+                <!-- Status indicators -->
+                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+
+                    <!-- Connection status -->
+                    <Border Background="#2C3E50" CornerRadius="6" Padding="12,7" Margin="0,0,8,0">
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <Ellipse Width="10" Height="10" Margin="0,0,7,0">
+                                <Ellipse.Style>
+                                    <Style TargetType="Ellipse">
+                                        <Setter Property="Fill" Value="{StaticResource WarningColor}"/>
+                                    </Style>
+                                </Ellipse.Style>
+                            </Ellipse>
+                            <TextBlock Text="Kết nối: " Foreground="#BDC3C7" FontSize="11"/>
+                            <TextBlock Text="{Binding ConnectionStatus}"
+                                       Foreground="{StaticResource WarningColor}"
+                                       FontWeight="Bold" FontSize="12"/>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Monitoring status -->
+                    <Border Background="#2C3E50" CornerRadius="6" Padding="12,7">
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <Ellipse Width="10" Height="10" Margin="0,0,7,0">
+                                <Ellipse.Style>
+                                    <Style TargetType="Ellipse">
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsMonitoring}" Value="True">
+                                                <Setter Property="Fill" Value="{StaticResource SuccessColor}"/>
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding IsMonitoring}" Value="False">
+                                                <Setter Property="Fill" Value="{StaticResource WarningColor}"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Ellipse.Style>
+                            </Ellipse>
+                            <TextBlock Text="Giám sát: " Foreground="#BDC3C7" FontSize="11"/>
+                            <TextBlock FontWeight="Bold" FontSize="12">
                                 <TextBlock.Style>
                                     <Style TargetType="TextBlock">
                                         <Style.Triggers>
@@ -139,47 +215,47 @@
             </Grid>
         </Border>
 
-        <!-- Device Grid -->
-        <ScrollViewer Grid.Row="1" Margin="10">
-            <ItemsControl ItemsSource="{Binding Devices}" FontSize="20">
+        <!-- ═══════════════════════════════════════════════════════════
+             DEVICE GRID
+             ═══════════════════════════════════════════════════════════ -->
+        <ScrollViewer Grid.Row="1" Margin="8">
+            <ItemsControl ItemsSource="{Binding Devices}">
                 <ItemsControl.ItemsPanel>
                     <ItemsPanelTemplate>
                         <UniformGrid Columns="{Binding GridColumns}" Rows="{Binding GridRows}"/>
                     </ItemsPanelTemplate>
                 </ItemsControl.ItemsPanel>
-                
+
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
+                        <!-- Device Card -->
                         <Border BorderThickness="3" Margin="5"
-                               Background="{StaticResource CardBackground}" CornerRadius="8"
-                               BorderBrush="{Binding DeviceBorderColor}">
+                                Background="{StaticResource CardBackground}" CornerRadius="8"
+                                BorderBrush="{Binding DeviceBorderColor}">
                             <Border.Style>
                                 <Style TargetType="Border">
                                     <Style.Triggers>
                                         <DataTrigger Binding="{Binding Enabled}" Value="False">
-                                            <Setter Property="Opacity" Value="0.6"/>
-                                        </DataTrigger>
-                                        <DataTrigger Binding="{Binding Enabled}" Value="True">
-                                            <Setter Property="Opacity" Value="1.0"/>
+                                            <Setter Property="Opacity" Value="0.5"/>
                                         </DataTrigger>
                                     </Style.Triggers>
                                 </Style>
                             </Border.Style>
                             <Border.Effect>
-                                <DropShadowEffect ShadowDepth="3" Color="Gray" Opacity="0.3"/>
+                                <DropShadowEffect ShadowDepth="2" Color="Gray" Opacity="0.2" BlurRadius="6"/>
                             </Border.Effect>
 
-                            <Grid Margin="10">
+                            <Grid Margin="8">
                                 <Grid.RowDefinitions>
-                                    <RowDefinition Height="40"/>
-                                    <RowDefinition Height="60"/>
-                                    <RowDefinition Height="80"/>
-                                    <RowDefinition Height="40"/>
-                                    <RowDefinition Height="*"/>
-                                    <RowDefinition Height="30"/>
+                                    <RowDefinition Height="42"/>   <!-- Device header -->
+                                    <RowDefinition Height="80"/>   <!-- Result status -->
+                                    <RowDefinition Height="78"/>   <!-- Measurements -->
+                                    <RowDefinition Height="42"/>   <!-- Statistics + pass rate -->
+                                    <RowDefinition Height="*"/>    <!-- Chart -->
+                                    <RowDefinition Height="26"/>   <!-- Footer / timestamp -->
                                 </Grid.RowDefinitions>
 
-                                <!-- Device Header -->
+                                <!-- ─── Row 0: Device Header ─── -->
                                 <Border Grid.Row="0" Background="{StaticResource PrimaryBackground}" CornerRadius="5">
                                     <Grid Margin="10,0">
                                         <Grid.ColumnDefinitions>
@@ -190,10 +266,11 @@
                                         </Grid.ColumnDefinitions>
 
                                         <TextBlock Grid.Column="0" Text="{Binding DeviceName}"
-                                                 Style="{StaticResource HeaderStyle}"
-                                                 HorizontalAlignment="Left" VerticalAlignment="Center"/>
+                                                   Style="{StaticResource HeaderStyle}"
+                                                   HorizontalAlignment="Left" VerticalAlignment="Center"/>
 
-                                        <Ellipse Grid.Column="1" Width="15" Height="15" Margin="5,0">
+                                        <!-- Online/Offline dot -->
+                                        <Ellipse Grid.Column="1" Width="12" Height="12" Margin="5,0">
                                             <Ellipse.Style>
                                                 <Style TargetType="Ellipse">
                                                     <Style.Triggers>
@@ -208,157 +285,211 @@
                                             </Ellipse.Style>
                                         </Ellipse>
 
-                                        <Border Grid.Column="2" Background="White" CornerRadius="3"
-                                               Padding="8,2" Margin="5,0">
+                                        <!-- Status badge (ONLINE / OFFLINE / DISABLED) -->
+                                        <Border Grid.Column="2" CornerRadius="3"
+                                                Padding="7,2" Margin="4,0">
+                                            <Border.Style>
+                                                <Style TargetType="Border">
+                                                    <Setter Property="Background" Value="#ECF0F1"/>
+                                                </Style>
+                                            </Border.Style>
                                             <TextBlock Text="{Binding DeviceStatusText}"
-                                                     FontSize="10" FontWeight="Bold"
-                                                     Foreground="Black"/>
+                                                       FontSize="10" FontWeight="Bold"
+                                                       Foreground="{Binding DeviceStatusColor}"/>
                                         </Border>
 
-                                        <Border Grid.Column="3" Background="White" CornerRadius="3"
-                                               Padding="8,2" Margin="5,0">
+                                        <!-- Model badge -->
+                                        <Border Grid.Column="3" Background="#ECF0F1" CornerRadius="3"
+                                                Padding="7,2" Margin="4,0">
                                             <TextBlock Text="{Binding DeviceModel}"
-                                                     FontSize="10" FontWeight="Bold"
-                                                     Foreground="Black"/>
+                                                       FontSize="10" FontWeight="Bold"
+                                                       Foreground="{StaticResource PrimaryTextColor}"/>
                                         </Border>
                                     </Grid>
                                 </Border>
 
-                                <!-- Status Section -->
-                                <Border Grid.Row="1" Margin="0,5" CornerRadius="5"
-                                       Background="{Binding ResultBackgroundColor}">
-                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
-                                        <TextBlock FontSize="24" Margin="0,0,10,0">
-                                            <TextBlock.Style>
-                                                <Style TargetType="TextBlock">
-                                                    <Style.Triggers>
-                                                        <DataTrigger Binding="{Binding ResultText}" Value="OK">
-                                                            <Setter Property="Text" Value="✓"/>
-                                                            <Setter Property="Foreground" Value="{StaticResource WhiteTextColor}"/>
-                                                        </DataTrigger>
-                                                        <DataTrigger Binding="{Binding ResultText}" Value="NG">
-                                                            <Setter Property="Text" Value="✗"/>
-                                                            <Setter Property="Foreground" Value="{StaticResource WhiteTextColor}"/>
-                                                        </DataTrigger>
-                                                        <DataTrigger Binding="{Binding ResultText}" Value="--">
-                                                            <Setter Property="Text" Value="⚠"/>
-                                                            <Setter Property="Foreground" Value="{StaticResource SecondaryTextColor}"/>
-                                                        </DataTrigger>
-                                                    </Style.Triggers>
-                                                </Style>
-                                            </TextBlock.Style>
-                                        </TextBlock>
-                                        <TextBlock Text="{Binding ResultText}"
-                                                 Style="{StaticResource StatusTextStyle}"/>
+                                <!-- ─── Row 1: Result Status ─── -->
+                                <Border Grid.Row="1" Margin="0,4" CornerRadius="5"
+                                        Background="{Binding ResultBackgroundColor}">
+                                    <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                                        <!-- Large OK / NG / -- -->
+                                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                            <TextBlock FontSize="32" Margin="0,0,8,0" VerticalAlignment="Center">
+                                                <TextBlock.Style>
+                                                    <Style TargetType="TextBlock">
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding ResultText}" Value="OK">
+                                                                <Setter Property="Text" Value="✓"/>
+                                                                <Setter Property="Foreground" Value="{StaticResource WhiteTextColor}"/>
+                                                            </DataTrigger>
+                                                            <DataTrigger Binding="{Binding ResultText}" Value="NG">
+                                                                <Setter Property="Text" Value="✗"/>
+                                                                <Setter Property="Foreground" Value="{StaticResource WhiteTextColor}"/>
+                                                            </DataTrigger>
+                                                            <DataTrigger Binding="{Binding ResultText}" Value="--">
+                                                                <Setter Property="Text" Value="–"/>
+                                                                <Setter Property="Foreground" Value="{StaticResource SecondaryTextColor}"/>
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </TextBlock.Style>
+                                            </TextBlock>
+                                            <TextBlock Text="{Binding ResultText}"
+                                                       FontSize="32" FontWeight="Bold"
+                                                       Foreground="White" VerticalAlignment="Center"/>
+                                        </StackPanel>
+                                        <!-- Actual torque value shown below result -->
+                                        <TextBlock Text="{Binding ActualTorque, StringFormat='{}{0:F2} Nm'}"
+                                                   FontSize="13" FontWeight="SemiBold"
+                                                   Foreground="White" Opacity="0.85"
+                                                   HorizontalAlignment="Center"/>
                                     </StackPanel>
                                 </Border>
 
-                                <!-- Measurement Grid -->
-                                <Border Grid.Row="2" BorderBrush="Black" BorderThickness="2"
-                                       Background="White" Margin="0,5">
+                                <!-- ─── Row 2: Measurement Grid ─── -->
+                                <Border Grid.Row="2" CornerRadius="5" Background="#F8F9FA"
+                                        BorderBrush="#DEE2E6" BorderThickness="1" Margin="0,0,0,4">
                                     <Grid>
                                         <Grid.RowDefinitions>
-                                            <RowDefinition Height="25"/>
+                                            <RowDefinition Height="22"/>
                                             <RowDefinition Height="*"/>
                                         </Grid.RowDefinitions>
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="1"/>
                                             <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="1"/>
                                             <ColumnDefinition Width="*"/>
                                         </Grid.ColumnDefinitions>
 
                                         <!-- Headers -->
-                                        <TextBlock Grid.Row="0" Grid.Column="0" Text="Tiêu chuẩn Nm"
-                                                 FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center"
-                                                 FontSize="12"/>
-                                        <TextBlock Grid.Row="0" Grid.Column="1" Text="Lực đặt Nm"
-                                                 FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center"
-                                                 FontSize="12"/>
-                                        <TextBlock Grid.Row="0" Grid.Column="2" Text="Thực tế Nm"
-                                                 FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center"
-                                                 FontSize="12"/>
+                                        <Border Grid.Row="0" Grid.Column="0" Background="#E9ECEF" CornerRadius="4,0,0,0">
+                                            <TextBlock Text="Tiêu chuẩn Nm" FontWeight="Bold"
+                                                       HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                       FontSize="10" Foreground="{StaticResource SecondaryTextColor}"/>
+                                        </Border>
+                                        <Rectangle Grid.Row="0" Grid.Column="1" Fill="#DEE2E6"/>
+                                        <Border Grid.Row="0" Grid.Column="2" Background="#E9ECEF">
+                                            <TextBlock Text="Lực đặt Nm" FontWeight="Bold"
+                                                       HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                       FontSize="10" Foreground="{StaticResource SecondaryTextColor}"/>
+                                        </Border>
+                                        <Rectangle Grid.Row="0" Grid.Column="3" Fill="#DEE2E6"/>
+                                        <!-- Actual torque column header highlighted in amber -->
+                                        <Border Grid.Row="0" Grid.Column="4" Background="#FFF3CD" CornerRadius="0,4,0,0">
+                                            <TextBlock Text="Thực tế Nm" FontWeight="Bold"
+                                                       HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                       FontSize="10" Foreground="#856404"/>
+                                        </Border>
+
+                                        <!-- Horizontal separator -->
+                                        <Rectangle Grid.Row="0" Grid.ColumnSpan="5" Fill="#DEE2E6"
+                                                   VerticalAlignment="Bottom" Height="1"/>
 
                                         <!-- Values -->
-                                        <Border Grid.Row="1" Grid.Column="0" BorderBrush="Black" BorderThickness="1"
-                                               Margin="2">
-                                            <TextBlock Text="{Binding StandardRange}"
-                                                     HorizontalAlignment="Center" VerticalAlignment="Center"
-                                                     FontSize="14" FontWeight="Bold"/>
-                                        </Border>
-
-                                        <Border Grid.Row="1" Grid.Column="1" BorderBrush="Black" BorderThickness="1"
-                                               Margin="2">
-                                            <TextBlock Text="{Binding TargetTorque, StringFormat='{}{0:F2}'}"
-                                                     HorizontalAlignment="Center" VerticalAlignment="Center"
-                                                     FontSize="14" FontWeight="Bold"/>
-                                        </Border>
-
-                                        <Border Grid.Row="1" Grid.Column="2" BorderBrush="Black" BorderThickness="1"
-                                               Margin="2">
-                                            <TextBlock Text="{Binding ActualTorque, StringFormat='{}{0:F2}'}"
-                                                     HorizontalAlignment="Center" VerticalAlignment="Center"
-                                                     FontSize="14" FontWeight="Bold"/>
-                                        </Border>
+                                        <TextBlock Grid.Row="1" Grid.Column="0" Text="{Binding StandardRange}"
+                                                   HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                   FontSize="13" FontWeight="Bold"
+                                                   Foreground="{StaticResource PrimaryTextColor}"/>
+                                        <Rectangle Grid.Row="1" Grid.Column="1" Fill="#DEE2E6"/>
+                                        <TextBlock Grid.Row="1" Grid.Column="2"
+                                                   Text="{Binding TargetTorque, StringFormat='{}{0:F2}'}"
+                                                   HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                   FontSize="13" FontWeight="Bold"
+                                                   Foreground="{StaticResource PrimaryTextColor}"/>
+                                        <Rectangle Grid.Row="1" Grid.Column="3" Fill="#DEE2E6"/>
+                                        <!-- Actual torque value larger and amber -->
+                                        <TextBlock Grid.Row="1" Grid.Column="4"
+                                                   Text="{Binding ActualTorque, StringFormat='{}{0:F2}'}"
+                                                   HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                   FontSize="16" FontWeight="Bold"
+                                                   Foreground="#856404"/>
                                     </Grid>
                                 </Border>
 
-                                <!-- Statistics Row -->
-                                <Border Grid.Row="3" Background="White" BorderBrush="Black" BorderThickness="2"
-                                       Margin="0,5">
+                                <!-- ─── Row 3: Statistics + Pass Rate ─── -->
+                                <Border Grid.Row="3" Background="#F8F9FA" CornerRadius="5"
+                                        BorderBrush="#DEE2E6" BorderThickness="1" Margin="0,0,0,4">
                                     <Grid>
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="1"/>
                                             <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="1"/>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="1"/>
                                             <ColumnDefinition Width="*"/>
                                         </Grid.ColumnDefinitions>
+                                        <Rectangle Grid.Column="1" Fill="#DEE2E6"/>
+                                        <Rectangle Grid.Column="3" Fill="#DEE2E6"/>
+                                        <Rectangle Grid.Column="5" Fill="#DEE2E6"/>
 
-                                        <TextBlock Grid.Column="0" Text="{Binding TotalCount, StringFormat='Tổng: {0}'}"
-                                                 HorizontalAlignment="Center" VerticalAlignment="Center"
-                                                 FontSize="12" FontWeight="Bold"/>
-
-                                        <TextBlock Grid.Column="1" Text="{Binding OKDeviceCount, StringFormat='OK: {0}'}"
-                                                 HorizontalAlignment="Center" VerticalAlignment="Center"
-                                                 FontSize="12" FontWeight="Bold" Foreground="Blue"/>
-
-                                        <TextBlock Grid.Column="2" Text="{Binding NGDeviceCount, StringFormat='NG: {0}'}"
-                                                 HorizontalAlignment="Center" VerticalAlignment="Center"
-                                                 FontSize="12" FontWeight="Bold" Foreground="Red"/>
+                                        <StackPanel Grid.Column="0" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                            <TextBlock Text="Tổng" FontSize="9" HorizontalAlignment="Center"
+                                                       Foreground="{StaticResource SecondaryTextColor}"/>
+                                            <TextBlock Text="{Binding TotalCount}" FontSize="15" FontWeight="Bold"
+                                                       HorizontalAlignment="Center"
+                                                       Foreground="{StaticResource PrimaryTextColor}"/>
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="2" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                            <TextBlock Text="OK" FontSize="9" HorizontalAlignment="Center"
+                                                       Foreground="{StaticResource SecondaryTextColor}"/>
+                                            <TextBlock Text="{Binding OKDeviceCount}" FontSize="15" FontWeight="Bold"
+                                                       HorizontalAlignment="Center"
+                                                       Foreground="{StaticResource SuccessColor}"/>
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="4" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                            <TextBlock Text="NG" FontSize="9" HorizontalAlignment="Center"
+                                                       Foreground="{StaticResource SecondaryTextColor}"/>
+                                            <TextBlock Text="{Binding NGDeviceCount}" FontSize="15" FontWeight="Bold"
+                                                       HorizontalAlignment="Center"
+                                                       Foreground="{StaticResource ErrorColor}"/>
+                                        </StackPanel>
+                                        <!-- Pass rate -->
+                                        <StackPanel Grid.Column="6" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                            <TextBlock Text="Đạt" FontSize="9" HorizontalAlignment="Center"
+                                                       Foreground="{StaticResource SecondaryTextColor}"/>
+                                            <TextBlock Text="{Binding PassRate}" FontSize="15" FontWeight="Bold"
+                                                       HorizontalAlignment="Center"
+                                                       Foreground="{StaticResource InfoColor}"/>
+                                        </StackPanel>
                                     </Grid>
                                 </Border>
 
-                                <!-- Chart Section -->
-                                <Border Grid.Row="4" Background="White" BorderBrush="Black" BorderThickness="2"
-                                       Margin="0,5">
+                                <!-- ─── Row 4: Torque Chart ─── -->
+                                <Border Grid.Row="4" Background="White" CornerRadius="5"
+                                        BorderBrush="#DEE2E6" BorderThickness="1">
                                     <Grid>
                                         <Grid.RowDefinitions>
-                                            <RowDefinition Height="20"/>
-                                            <RowDefinition Height="120"/>
-                                            <RowDefinition Height="20"/>
+                                            <RowDefinition Height="18"/>
+                                            <RowDefinition Height="*"/>
+                                            <RowDefinition Height="18"/>
                                         </Grid.RowDefinitions>
 
-                                        <!-- Max label -->
-                                        <TextBlock Grid.Row="0" Text="{Binding MaxTorque, StringFormat='Max({0:F2} Nm)'}"
-                                                 HorizontalAlignment="Right" VerticalAlignment="Center"
-                                                 FontSize="10" Margin="0,0,10,0"/>
+                                        <TextBlock Grid.Row="0"
+                                                   Text="{Binding MaxTorque, StringFormat='Max: {0:F2} Nm'}"
+                                                   HorizontalAlignment="Right" VerticalAlignment="Center"
+                                                   FontSize="9" Margin="0,0,8,0"
+                                                   Foreground="{StaticResource SecondaryTextColor}"/>
 
-                                        <!-- Real-time Torque Chart -->
-                                        <controls:TorqueChart Grid.Row="1" Background="White" Margin="10"
-                                                            TorqueHistory="{Binding TorqueHistory}"
-                                                            MinTorque="{Binding MinTorque}"
-                                                            MaxTorque="{Binding MaxTorque}"/>
+                                        <controls:TorqueChart Grid.Row="1" Background="White" Margin="8,2"
+                                                              TorqueHistory="{Binding TorqueHistory}"
+                                                              MinTorque="{Binding MinTorque}"
+                                                              MaxTorque="{Binding MaxTorque}"/>
 
-                                        <!-- Min label -->
-                                        <TextBlock Grid.Row="2" Text="{Binding MinTorque, StringFormat='Min({0:F2} Nm)'}"
-                                                 HorizontalAlignment="Right" VerticalAlignment="Center"
-                                                 FontSize="10" Margin="0,0,10,0"/>
+                                        <TextBlock Grid.Row="2"
+                                                   Text="{Binding MinTorque, StringFormat='Min: {0:F2} Nm'}"
+                                                   HorizontalAlignment="Right" VerticalAlignment="Center"
+                                                   FontSize="9" Margin="0,0,8,0"
+                                                   Foreground="{StaticResource SecondaryTextColor}"/>
                                     </Grid>
                                 </Border>
 
-                                <!-- Footer with Date -->
-                                <Border Grid.Row="5" Margin="0,5,0,0">
-                                    <TextBlock Text="{Binding LastUpdate, StringFormat='dd.MM.yyyy'}"
-                                             FontSize="14" FontWeight="Bold"
-                                             HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                                <!-- ─── Row 5: Footer / Timestamp ─── -->
+                                <Border Grid.Row="5" Margin="0,3,0,0">
+                                    <TextBlock Text="{Binding LastUpdate, StringFormat='HH:mm:ss  dd.MM.yyyy'}"
+                                               FontSize="10" Foreground="{StaticResource SecondaryTextColor}"
+                                               HorizontalAlignment="Right" VerticalAlignment="Center"/>
                                 </Border>
                             </Grid>
                         </Border>
@@ -367,59 +498,58 @@
             </ItemsControl>
         </ScrollViewer>
 
-        <!-- Status Bar -->
+        <!-- ═══════════════════════════════════════════════════════════
+             STATUS BAR
+             ═══════════════════════════════════════════════════════════ -->
         <StatusBar Grid.Row="2" Background="{StaticResource SecondaryBackground}">
             <StatusBarItem>
-                <TextBlock Text="{Binding TotalDevices, StringFormat='Tổng thiết bị: {0}'}"
-                          FontWeight="Bold" Foreground="{StaticResource WhiteTextColor}"/>
+                <TextBlock Text="{Binding TotalDevices, StringFormat='Thiết bị: {0}'}"
+                           FontWeight="Bold" Foreground="{StaticResource WhiteTextColor}" FontSize="11"/>
             </StatusBarItem>
             <Separator/>
             <StatusBarItem>
                 <TextBlock Text="{Binding ConnectedDevicesCount, StringFormat='Kết nối: {0}'}"
-                          FontWeight="Bold" Foreground="{StaticResource SuccessColor}"/>
+                           FontWeight="Bold" Foreground="{StaticResource SuccessColor}" FontSize="11"/>
             </StatusBarItem>
             <Separator/>
             <StatusBarItem>
                 <TextBlock Text="{Binding OKCount, StringFormat='OK: {0}'}"
-                          FontWeight="Bold" Foreground="{StaticResource InfoColor}"/>
+                           FontWeight="Bold" Foreground="{StaticResource SuccessColor}" FontSize="11"/>
             </StatusBarItem>
             <Separator/>
             <StatusBarItem>
                 <TextBlock Text="{Binding NGCount, StringFormat='NG: {0}'}"
-                          FontWeight="Bold" Foreground="{StaticResource ErrorColor}"/>
+                           FontWeight="Bold" Foreground="{StaticResource ErrorColor}" FontSize="11"/>
             </StatusBarItem>
             <Separator/>
             <StatusBarItem>
                 <StackPanel Orientation="Horizontal">
-                    <TextBlock Margin="10,0,5,0" FontWeight="Bold" Foreground="{StaticResource WhiteTextColor}">
-                        <Run Text="Tổng hôm nay:"/>
-                    </TextBlock>
-                    <TextBlock Foreground="{StaticResource SuccessColor}" FontWeight="Bold">
+                    <TextBlock Text="Hôm nay: " Margin="8,0,4,0" FontWeight="Bold"
+                               Foreground="#BDC3C7" FontSize="11"/>
+                    <TextBlock Foreground="{StaticResource SuccessColor}" FontWeight="Bold" FontSize="11">
                         <Run Text="{Binding DailyOKCount}"/>
                         <Run Text=" OK"/>
                     </TextBlock>
-                    <TextBlock Text="/" Margin="5,0" FontWeight="Bold" Foreground="{StaticResource WhiteTextColor}"/>
-                    <TextBlock Foreground="{StaticResource ErrorColor}" FontWeight="Bold">
+                    <TextBlock Text=" / " Margin="3,0" Foreground="{StaticResource WhiteTextColor}" FontSize="11"/>
+                    <TextBlock Foreground="{StaticResource ErrorColor}" FontWeight="Bold" FontSize="11">
                         <Run Text="{Binding DailyNGCount}"/>
                         <Run Text=" NG"/>
                     </TextBlock>
                 </StackPanel>
             </StatusBarItem>
-            <!-- Trial Countdown (only shown when not licensed) -->
+            <!-- Trial countdown (only shown when not licensed) -->
             <Separator Visibility="{Binding ShowTrialCountdown, Converter={StaticResource BoolToVisibilityConverter}}"/>
             <StatusBarItem Visibility="{Binding ShowTrialCountdown, Converter={StaticResource BoolToVisibilityConverter}}">
                 <Border Background="#FFF3E0" CornerRadius="3" Padding="8,2">
                     <TextBlock Text="{Binding TrialTimeDisplay}"
-                              FontWeight="Bold"
-                              FontSize="12"
-                              Foreground="{Binding TrialCountdownColor}"/>
+                               FontWeight="Bold" FontSize="11"
+                               Foreground="{Binding TrialCountdownColor}"/>
                 </Border>
             </StatusBarItem>
             <Separator/>
             <StatusBarItem HorizontalAlignment="Right">
-                <TextBlock Text="{Binding Source={x:Static sys:DateTime.Now},
-                          StringFormat='Thời gian: {0:HH:mm:ss}'}"
-                          FontWeight="Bold" Foreground="{StaticResource WhiteTextColor}"/>
+                <TextBlock Text="{Binding Source={x:Static sys:DateTime.Now}, StringFormat='HH:mm:ss  dd/MM/yyyy'}"
+                           FontWeight="Bold" Foreground="{StaticResource WhiteTextColor}" FontSize="11"/>
             </StatusBarItem>
         </StatusBar>
     </Grid>
